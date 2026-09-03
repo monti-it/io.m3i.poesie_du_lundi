@@ -1,0 +1,24 @@
+# OS / editor
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.claude/
+
+# Local scratch (not part of the project — see #? repo bootstrap)
+Gmail/
+Gmail(*)/
+
+# .NET
+bin/
+obj/
+*.user
+
+# Node / Vite
+node_modules/
+dist/
+*.local
+
+# Docker / env
+*.env
+.env

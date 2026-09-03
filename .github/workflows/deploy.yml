@@ -1,0 +1,60 @@
+name: Deploy
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'frontend/**'
+      - 'api/**'
+      - '.github/workflows/deploy.yml'
+
+jobs:
+  test:
+    uses: ./.github/workflows/ci.yml
+
+  build-and-push:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        include:
+          - context: ./frontend
+            image: ghcr.io/monti-it/io.m3i.poesie_du_lundi-frontend
+          - context: ./api
+            image: ghcr.io/monti-it/io.m3i.poesie_du_lundi-api
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          push: true
+          tags: |
+            ${{ matrix.image }}:latest
+            ${{ matrix.image }}:${{ github.sha }}
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            KUBECONFIG=/home/deploy/.kube/config
+            CTX="--kubeconfig=$KUBECONFIG --context=poesie-ci"
+            kubectl $CTX set image deployment/poesie-api migrate=ghcr.io/monti-it/io.m3i.poesie_du_lundi-api:${{ github.sha }} api=ghcr.io/monti-it/io.m3i.poesie_du_lundi-api:${{ github.sha }} -n poesie
+            kubectl $CTX set image deployment/poesie-frontend frontend=ghcr.io/monti-it/io.m3i.poesie_du_lundi-frontend:${{ github.sha }} -n poesie
+            kubectl $CTX rollout status deployment/poesie-api -n poesie --timeout=120s
+            kubectl $CTX rollout status deployment/poesie-frontend -n poesie --timeout=120s

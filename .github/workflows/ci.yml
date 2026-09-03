@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  pull_request:
+    paths:
+      - 'api/**'
+      - 'frontend/**'
+      - '.github/workflows/ci.yml'
+  workflow_call:
+
+jobs:
+  test-api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        working-directory: api
+        run: dotnet restore PoesieDuLundi.sln
+
+      - name: Build
+        working-directory: api
+        run: dotnet build PoesieDuLundi.sln --no-restore --configuration Release
+
+      - name: Test
+        working-directory: api
+        run: dotnet test PoesieDuLundi.sln --no-build --configuration Release
+
+  # Real-Postgres persistence smoke tests — supplements the InMemory suite, never replaces it.
+  # Not in PoesieDuLundi.sln, so `test-api` never runs it; needs the runner's Docker daemon
+  # (Testcontainers spins up postgres:18). See docs/ENGINEERING_PRACTICES.md "Database strategy".
+  test-api-postgres:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Test (real Postgres)
+        working-directory: api
+        run: dotnet test tests/Persistence.SmokeTests/PoesieDuLundi.Persistence.SmokeTests.csproj --configuration Release
+
+  test-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - working-directory: frontend
+        run: npm ci
+
+      - working-directory: frontend
+        run: npm run build
+
+      - working-directory: frontend
+        run: npm run lint
+
+      - working-directory: frontend
+        run: npm test

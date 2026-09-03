@@ -1,0 +1,42 @@
+# Local dev only — a fast full-stack inner loop. NOT how this is deployed (production runs on
+# k3s, see README). Fails fast if POSTGRES_PASSWORD is unset.
+services:
+  frontend:
+    image: ghcr.io/monti-it/io.m3i.poesie_du_lundi-frontend:latest
+    build:
+      context: ./frontend
+    ports:
+      - "127.0.0.1:8080:80"
+    restart: unless-stopped
+
+  api:
+    image: ghcr.io/monti-it/io.m3i.poesie_du_lundi-api:latest
+    build:
+      context: ./api
+    ports:
+      - "127.0.0.1:5080:8080"
+    environment:
+      ConnectionStrings__Default: "Host=db;Database=${POSTGRES_DB:-poesie};Username=${POSTGRES_USER:-poesie};Password=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}"
+      RunMigrationsOnStartup: "true"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-poesie}
+      POSTGRES_USER: ${POSTGRES_USER:-poesie}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    volumes:
+      - db-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-poesie}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  db-data:

@@ -1,0 +1,67 @@
+# Two Ingress resources on one host so the public site stays anonymous while authoring is
+# SSO-gated. Traefik matches the most specific path prefix first, so /admin and /api/admin
+# (gated) win over / and /api (public). cert-manager issues one certificate for the host;
+# only the public Ingress carries the cert-manager annotation + tls block to avoid two
+# ACME orders racing for the same secret.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: poesie-public
+  namespace: poesie
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - poesie.m3i.io
+      secretName: poesie-tls
+  rules:
+    - host: poesie.m3i.io
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: poesie-api
+                port:
+                  number: 80
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: poesie-frontend
+                port:
+                  number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: poesie-admin
+  namespace: poesie
+  annotations:
+    # Shared SSO gate — Authelia at auth.m3i.io, via a Traefik forwardAuth Middleware owned by
+    # the io.m3i.auth repo (namespace `auth`, consumed cross-namespace). Applied to the admin
+    # paths only; the public site above has no middleware.
+    traefik.ingress.kubernetes.io/router.middlewares: auth-forward-auth@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: poesie.m3i.io
+      http:
+        paths:
+          - path: /api/admin
+            pathType: Prefix
+            backend:
+              service:
+                name: poesie-api
+                port:
+                  number: 80
+          - path: /admin
+            pathType: Prefix
+            backend:
+              service:
+                name: poesie-frontend
+                port:
+                  number: 80

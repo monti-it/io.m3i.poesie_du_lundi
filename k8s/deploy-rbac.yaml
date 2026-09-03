@@ -1,0 +1,48 @@
+# Namespace-scoped credential for CI's `kubectl set image` + `rollout status`. Copied from
+# io.m3i.ledgy's deploy-rbac.yaml with deploy-ci -> poesie-ci and the namespace changed.
+# The Role is scoped to the `poesie` namespace only — never grant access to another app's
+# namespace. CI never runs `kubectl apply`; manifest changes are a manual `sudo kubectl apply`.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: poesie-ci
+  namespace: poesie
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: poesie-ci
+  namespace: poesie
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "watch", "patch"]
+  - apiGroups: ["apps"]
+    resources: ["replicasets"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: poesie-ci
+  namespace: poesie
+subjects:
+  - kind: ServiceAccount
+    name: poesie-ci
+    namespace: poesie
+roleRef:
+  kind: Role
+  name: poesie-ci
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: poesie-ci-token
+  namespace: poesie
+  annotations:
+    kubernetes.io/service-account.name: poesie-ci
+type: kubernetes.io/service-account-token
