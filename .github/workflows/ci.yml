@@ -20,15 +20,15 @@ jobs:
 
       - name: Restore
         working-directory: api
-        run: dotnet restore PoesieDuLundi.sln
+        run: dotnet restore PoesieDuLundi.slnx
 
       - name: Build
         working-directory: api
-        run: dotnet build PoesieDuLundi.sln --no-restore --configuration Release
+        run: dotnet build PoesieDuLundi.slnx --no-restore --configuration Release
 
       - name: Test
         working-directory: api
-        run: dotnet test PoesieDuLundi.sln --no-build --configuration Release
+        run: dotnet test PoesieDuLundi.slnx --no-build --configuration Release
 
   # Real-Postgres persistence smoke tests — supplements the InMemory suite, never replaces it.
   # Not in PoesieDuLundi.sln, so `test-api` never runs it; needs the runner's Docker daemon
