@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/PoesieDuLundi/PoesieDuLundi.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Architecture.Tests/PoesieDuLundi.Architecture.Tests.csproj" />
+    <Project Path="tests/PoesieDuLundi.Tests/PoesieDuLundi.Tests.csproj" />
+  </Folder>
+</Solution>

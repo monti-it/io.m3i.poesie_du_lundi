@@ -38,7 +38,7 @@ real-Postgres smoke job — is the same pattern, deliberately.
 
 - `frontend/` — React + TypeScript (Vite), nginx container. `modules/reading` = the public
   site, `modules/authoring` = the `/admin` editor. *(built from issues)*
-- `api/` — .NET 10, single project `src/PoesieDuLundi` (`PoesieDuLundi.sln`), Kestrel container.
+- `api/` — .NET 10, single project `src/PoesieDuLundi` (`PoesieDuLundi.slnx`), Kestrel container.
   `Domain/` `Application/` `Infrastructure/` `Api/` as namespaces; `Api/Public` anonymous,
   `Api/Admin` SSO-gated. *(built from issues)*
 - `k8s/` — Deployments+Services for `api`/`frontend`, a StatefulSet+headless Service for
@@ -68,7 +68,7 @@ ConnectionStrings__Default="Host=localhost;Database=poesie;Username=poesie;Passw
   dotnet run --project src/PoesieDuLundi --urls http://localhost:5080
 ```
 
-`dotnet build PoesieDuLundi.sln` builds everything (app + test projects).
+`dotnet build PoesieDuLundi.slnx` builds everything (app + test projects).
 
 Full stack in containers:
 
