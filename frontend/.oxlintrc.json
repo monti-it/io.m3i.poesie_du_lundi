@@ -1,0 +1,26 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["react", "typescript", "oxc"],
+  "rules": {
+    "react/rules-of-hooks": "error",
+    "react/only-export-components": ["warn", { "allowConstantExport": true }]
+  },
+  "overrides": [
+    {
+      "files": ["src/modules/reading/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@modules/authoring/**", "**/modules/authoring/**"],
+                "message": "The public bundle must not import from modules/authoring — keep the admin editor out of the anonymous page weight (docs/ENGINEERING_PRACTICES.md \"Frontend layout\")."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
