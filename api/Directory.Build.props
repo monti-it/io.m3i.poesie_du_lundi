@@ -1,0 +1,22 @@
+<Project>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <!--
+    Static analysis, mirroring io.m3i.ledgy's api/Directory.Build.props: built-in .NET analyzers
+    at AnalysisMode=Default plus .editorconfig code-style, warnings-as-errors on CI only
+    (ContinuousIntegrationBuild, passed explicitly by the workflows) so local `dotnet run` stays
+    friction-free.
+  -->
+  <PropertyGroup>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <AnalysisMode>Default</AnalysisMode>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <TreatWarningsAsErrors Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+</Project>
