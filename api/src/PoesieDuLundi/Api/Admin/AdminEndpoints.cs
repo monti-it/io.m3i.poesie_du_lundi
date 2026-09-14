@@ -13,7 +13,7 @@ public static class AdminEndpoints
     /// </summary>
     public static IEndpointRouteBuilder MapAdminApi(this IEndpointRouteBuilder app)
     {
-        var admin = app.MapGroup("/api/admin");
+        var admin = app.MapGroup("/api/admin").WithTags("Admin");
 
         admin.AddEndpointFilter(async (context, next) =>
         {
@@ -28,7 +28,9 @@ public static class AdminEndpoints
         // Echoes the resolved identity — verifies the forwardAuth wiring end to end without
         // touching any real admin feature yet.
         admin.MapGet("/me", (ForwardAuthIdentityProvider identity) =>
-            Results.Ok(new MeDto(identity.GetCurrentSubject()!)));
+                Results.Ok(new MeDto(identity.GetCurrentSubject()!)))
+            .Produces<MeDto>()
+            .Produces(StatusCodes.Status401Unauthorized);
 
         return app;
     }
