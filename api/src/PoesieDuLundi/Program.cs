@@ -2,6 +2,7 @@ using System.Reflection;
 using PoesieDuLundi;
 using PoesieDuLundi.Api.Admin;
 using PoesieDuLundi.Infrastructure;
+using Microsoft.OpenApi;
 using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,6 +14,9 @@ var database = new DatabaseOptions(
 builder.Services.AddPoesieDuLundiInfrastructure(database);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ForwardAuthIdentityProvider>();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+    options.SwaggerDoc("v1", new OpenApiInfo { Title = "PoesieDuLundi API", Version = "v1" }));
 
 var app = builder.Build();
 
@@ -63,10 +67,15 @@ app.MapGet("/healthz", async (IConfiguration configuration) =>
     return reachable
         ? Results.Ok(new HealthDto("ok", "connected"))
         : Results.Problem("Database unreachable", statusCode: StatusCodes.Status503ServiceUnavailable);
-});
+})
+.WithTags("Diagnostics")
+.Produces<HealthDto>()
+.ProducesProblem(StatusCodes.Status503ServiceUnavailable);
 
 // No DB dependency — the k8s liveness probe.
-app.MapGet("/api/hello", () => Results.Ok(new HelloDto("Hello from PoesieDuLundi")));
+app.MapGet("/api/hello", () => Results.Ok(new HelloDto("Hello from PoesieDuLundi")))
+    .WithTags("Diagnostics")
+    .Produces<HelloDto>();
 
 app.MapGet("/api/status", () =>
 {
@@ -74,7 +83,14 @@ app.MapGet("/api/status", () =>
         .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
         ?? "unknown";
     return Results.Ok(new StatusDto(version, app.Environment.EnvironmentName));
-});
+})
+.WithTags("Diagnostics")
+.Produces<StatusDto>();
+
+if (ApiDocumentationPolicy.ShouldExposeDocs(app.Environment, app.Configuration))
+{
+    app.MapAdminApiDocs();
+}
 
 app.MapAdminApi();
 
