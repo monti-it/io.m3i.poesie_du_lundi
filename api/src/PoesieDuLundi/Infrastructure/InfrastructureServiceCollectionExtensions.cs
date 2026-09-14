@@ -1,11 +1,12 @@
 using Microsoft.EntityFrameworkCore;
+using PoesieDuLundi.Application;
 
 namespace PoesieDuLundi.Infrastructure;
 
 public static class InfrastructureServiceCollectionExtensions
 {
     public static IServiceCollection AddPoesieDuLundiInfrastructure(
-        this IServiceCollection services, DatabaseOptions database)
+        this IServiceCollection services, DatabaseOptions database, PublicationJobOptions publicationJob)
     {
         services.AddDbContext<PoesieDuLundiDbContext>(options =>
         {
@@ -20,6 +21,16 @@ public static class InfrastructureServiceCollectionExtensions
                     npgsql.MigrationsHistoryTable("__EFMigrationsHistory"));
             }
         });
+
+        services.AddScoped<IPoemRepository, PoemRepository>();
+        services.AddScoped<SchedulePoemForMonday>();
+        services.AddScoped<PublishPoem>();
+        services.AddScoped<UnpublishPoem>();
+        services.AddScoped<MaterialiseDuePoems>();
+        services.AddSingleton(TimeProvider.System);
+
+        services.AddSingleton(publicationJob);
+        services.AddHostedService<PoemPublicationBackgroundService>();
 
         return services;
     }

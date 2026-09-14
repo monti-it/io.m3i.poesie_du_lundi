@@ -11,7 +11,8 @@ var database = new DatabaseOptions(
     builder.Configuration.GetConnectionString("Default"),
     builder.Configuration["Database:Provider"],
     builder.Configuration["Database:InMemoryDatabaseName"]);
-builder.Services.AddPoesieDuLundiInfrastructure(database);
+var publicationJob = new PublicationJobOptions(PublicationJobStartupPolicy.GetInterval(builder.Configuration));
+builder.Services.AddPoesieDuLundiInfrastructure(database, publicationJob);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ForwardAuthIdentityProvider>();
 builder.Services.AddEndpointsApiExplorer();
