@@ -39,6 +39,12 @@ public sealed class Poem : AggregateRoot
 
     public void ChangeSlug(Slug slug) => Slug = slug;
 
+    /// <summary>Resolved-on-read publication check: a scheduled poem counts as published once its
+    /// date has arrived, independently of whether the materialising job has run yet
+    /// (docs/ARCHITECTURE.md "Publishing model").</summary>
+    public bool IsEffectivelyPublished(DateOnly asOf) =>
+        Status == PoemStatus.Published || (Status == PoemStatus.Scheduled && PublicationDate <= asOf);
+
     public Result Schedule(DateOnly publicationDate)
     {
         if (Status != PoemStatus.Draft)

@@ -163,4 +163,33 @@ public class PoemTests
         Assert.True(result.IsFailure);
         Assert.Equal(PoemStatus.Draft, poem.Status);
     }
+
+    [Fact]
+    public void A_draft_is_not_effectively_published()
+    {
+        var poem = CreatePoem();
+
+        Assert.False(poem.IsEffectivelyPublished(new DateOnly(2026, 9, 21)));
+    }
+
+    [Fact]
+    public void A_scheduled_poem_becomes_effectively_published_once_its_date_arrives()
+    {
+        var poem = CreatePoem();
+        poem.Schedule(new DateOnly(2026, 9, 21));
+
+        Assert.False(poem.IsEffectivelyPublished(new DateOnly(2026, 9, 20)));
+        Assert.True(poem.IsEffectivelyPublished(new DateOnly(2026, 9, 21)));
+        Assert.True(poem.IsEffectivelyPublished(new DateOnly(2026, 9, 28)));
+    }
+
+    [Fact]
+    public void A_published_poem_is_always_effectively_published()
+    {
+        var poem = CreatePoem();
+        poem.Schedule(new DateOnly(2026, 9, 21));
+        poem.Publish();
+
+        Assert.True(poem.IsEffectivelyPublished(new DateOnly(2020, 1, 1)));
+    }
 }
