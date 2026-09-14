@@ -1,5 +1,6 @@
 using System.Reflection;
 using PoesieDuLundi;
+using PoesieDuLundi.Api.Admin;
 using PoesieDuLundi.Infrastructure;
 using Npgsql;
 
@@ -10,6 +11,8 @@ var database = new DatabaseOptions(
     builder.Configuration["Database:Provider"],
     builder.Configuration["Database:InMemoryDatabaseName"]);
 builder.Services.AddPoesieDuLundiInfrastructure(database);
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ForwardAuthIdentityProvider>();
 
 var app = builder.Build();
 
@@ -72,6 +75,8 @@ app.MapGet("/api/status", () =>
         ?? "unknown";
     return Results.Ok(new StatusDto(version, app.Environment.EnvironmentName));
 });
+
+app.MapAdminApi();
 
 app.Run();
 
