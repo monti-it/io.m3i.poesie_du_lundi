@@ -18,7 +18,7 @@ templates, CI/CD workflow skeletons, `NuGet.Config`, `docker-compose.yml`). The 
 and `frontend/` app are built issue-by-issue from the [GitHub backlog](../../issues) — see the
 **Foundation** and **MVP** milestones. Nothing is deployed yet.
 
-Target: live at `https://poesie.m3i.io`, public and anonymously readable, with a small
+Target: live at `https://poesie-du-lundi.m3i.io`, public and anonymously readable, with a small
 SSO-gated authoring area at `/admin`.
 
 ## What makes this different from ledgy
@@ -88,7 +88,7 @@ rollback). The differences for this app:
 
 - **Namespace**: `poesie` (not `ledgy`).
 - **Images**: `ghcr.io/monti-it/io.m3i.poesie_du_lundi-{api,frontend}`.
-- **Domain**: `poesie.m3i.io`.
+- **Domain**: `poesie-du-lundi.m3i.io`.
 - **kubeconfig context**: `poesie-ci` — CI passes `--context=poesie-ci` explicitly on every
   `kubectl` call (the shared `/home/deploy/.kube/config` has one context per app; never rely on
   `current-context`).
@@ -122,7 +122,7 @@ pattern"), tracked as the infra issues in the backlog:
    are set from day one (this is app #2 — the node's 3.7GB RAM is now shared).
 6. Add the `poesie-ci` credential + context into `/home/deploy/.kube/config` (reuse the
    existing `ledgy-k3s` cluster entry — same physical cluster).
-7. DNS: `poesie.m3i.io` A record → the VPS IP. cert-manager issues the certificate on first
+7. DNS: `poesie-du-lundi.m3i.io` A record → the VPS IP. cert-manager issues the certificate on first
    `Ingress` apply.
 
 ## Feeds

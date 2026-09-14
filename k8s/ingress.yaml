@@ -14,10 +14,10 @@ spec:
   ingressClassName: traefik
   tls:
     - hosts:
-        - poesie.m3i.io
+        - poesie-du-lundi.m3i.io
       secretName: poesie-tls
   rules:
-    - host: poesie.m3i.io
+    - host: poesie-du-lundi.m3i.io
       http:
         paths:
           - path: /api
@@ -48,7 +48,7 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-    - host: poesie.m3i.io
+    - host: poesie-du-lundi.m3i.io
       http:
         paths:
           - path: /api/admin
