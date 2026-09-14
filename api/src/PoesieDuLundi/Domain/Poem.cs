@@ -1,0 +1,78 @@
+using PoesieDuLundi.SharedKernel;
+
+namespace PoesieDuLundi.Domain;
+
+/// <summary>
+/// A poem in the Monday publishing cycle. The "must be a Monday" scheduling rule belongs to the
+/// publishing workflow (issue #17), not here — Poem only enforces its own
+/// Draft → Scheduled → Published lifecycle.
+/// </summary>
+public sealed class Poem : AggregateRoot
+{
+    public string Title { get; }
+    public string Body { get; }
+    public Slug Slug { get; private set; }
+    public Guid? SeriesId { get; }
+    public Guid? AuthorId { get; }
+    public PoemStatus Status { get; private set; }
+    public DateOnly? PublicationDate { get; private set; }
+
+    public Poem(string title, string body, Guid? seriesId = null, Guid? authorId = null)
+    {
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            throw new ArgumentException("Title is required.", nameof(title));
+        }
+
+        if (string.IsNullOrWhiteSpace(body))
+        {
+            throw new ArgumentException("Body is required.", nameof(body));
+        }
+
+        Title = title.Trim();
+        Body = body;
+        Slug = Slug.FromText(Title);
+        SeriesId = seriesId;
+        AuthorId = authorId;
+        Status = PoemStatus.Draft;
+    }
+
+    public void ChangeSlug(Slug slug) => Slug = slug;
+
+    public Result Schedule(DateOnly publicationDate)
+    {
+        if (Status != PoemStatus.Draft)
+        {
+            return Result.Failure("Only a draft poem can be scheduled.");
+        }
+
+        Status = PoemStatus.Scheduled;
+        PublicationDate = publicationDate;
+        return Result.Success();
+    }
+
+    public Result Publish()
+    {
+        if (Status != PoemStatus.Scheduled)
+        {
+            return Result.Failure("Only a scheduled poem can be published.");
+        }
+
+        Status = PoemStatus.Published;
+        AddDomainEvent(new PoemPublished(Id, PublicationDate!.Value));
+        return Result.Success();
+    }
+
+    public Result Unpublish()
+    {
+        if (Status != PoemStatus.Published)
+        {
+            return Result.Failure("Only a published poem can be unpublished.");
+        }
+
+        Status = PoemStatus.Draft;
+        PublicationDate = null;
+        AddDomainEvent(new PoemUnpublished(Id));
+        return Result.Success();
+    }
+}
