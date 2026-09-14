@@ -1,5 +1,7 @@
+using System.Reflection;
 using PoesieDuLundi;
 using PoesieDuLundi.Infrastructure;
+using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,8 +30,48 @@ if (MigrationStartupPolicy.ShouldRunMigrationsOnStartup(app.Environment, app.Con
     DatabaseMigrator.Migrate(app.Services);
 }
 
-// Placeholder — the real diagnostics endpoints (/healthz, /api/hello, /api/status) land in #11.
-app.MapGet("/api/hello", () => Results.Ok(new { message = "Hello from PoesieDuLundi" }));
+async Task<bool> IsDatabaseReachableAsync(IConfiguration configuration)
+{
+    var connectionString = configuration.GetConnectionString("Default");
+    if (string.IsNullOrWhiteSpace(connectionString))
+    {
+        return false;
+    }
+
+    try
+    {
+        await using var connection = new NpgsqlConnection(connectionString);
+        await connection.OpenAsync();
+        return true;
+    }
+    catch (NpgsqlException)
+    {
+        return false;
+    }
+}
+
+// Opens a raw Postgres connection — the k8s readiness probe. Not exposed on the public Ingress
+// routing (it's covered by the `/api` prefix — fine, it just isn't linked anywhere). A Postgres
+// hiccup should stop traffic, not restart the pod, so this must stay the readiness probe, never
+// liveness.
+app.MapGet("/healthz", async (IConfiguration configuration) =>
+{
+    var reachable = await IsDatabaseReachableAsync(configuration);
+    return reachable
+        ? Results.Ok(new HealthDto("ok", "connected"))
+        : Results.Problem("Database unreachable", statusCode: StatusCodes.Status503ServiceUnavailable);
+});
+
+// No DB dependency — the k8s liveness probe.
+app.MapGet("/api/hello", () => Results.Ok(new HelloDto("Hello from PoesieDuLundi")));
+
+app.MapGet("/api/status", () =>
+{
+    var version = Assembly.GetExecutingAssembly()
+        .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+        ?? "unknown";
+    return Results.Ok(new StatusDto(version, app.Environment.EnvironmentName));
+});
 
 app.Run();
 
