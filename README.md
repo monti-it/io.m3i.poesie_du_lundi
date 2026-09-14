@@ -109,20 +109,37 @@ Already shared cluster-wide, **don't redo**: k3s, Traefik, cert-manager + the `l
 `ClusterIssuer`, the `deploy` OS user, ufw. Per-app steps (from ledgy's "Per-app — repeat this
 pattern"), tracked as the infra issues in the backlog:
 
-1. `sudo kubectl create namespace poesie`
-2. New GitHub **deploy key** on the VPS + an SSH `Host github.com-poesie` alias in
+1. Sanity-check node headroom before adding a second app's Postgres instance:
+   `free -h` and `sudo kubectl describe nodes` (the node has 3.7GB total; ledgy alone already
+   uses a slice of it).
+2. `sudo kubectl create namespace poesie`
+3. New GitHub **deploy key** on the VPS + an SSH `Host github.com-poesie` alias in
    `/home/deploy/.ssh/config` (do **not** overwrite ledgy's `Host github.com` block). Clone
    with `git clone git@github.com-poesie:monti-it/io.m3i.poesie_du_lundi.git`.
-3. `poesie-db-credentials` + `poesie-api-config` Secrets in the `poesie` namespace
-   (`openssl rand` server-side, never printed).
-4. `ghcr-pull` image-pull Secret + the `imagePullSecrets` ServiceAccount patch, `-n poesie`
+4. `poesie-db-credentials` + `poesie-api-config` Secrets in the `poesie` namespace, generated
+   inline so the password is never printed to a terminal or log:
+
+   ```bash
+   PW=$(openssl rand -base64 24)
+   sudo kubectl create secret generic poesie-db-credentials -n poesie \
+     --from-literal=POSTGRES_DB=poesie \
+     --from-literal=POSTGRES_USER=poesie \
+     --from-literal=POSTGRES_PASSWORD="$PW"
+   sudo kubectl create secret generic poesie-api-config -n poesie \
+     --from-literal=ConnectionStrings__Default="Host=poesie-db;Database=poesie;Username=poesie;Password=$PW" \
+     --from-literal=ASPNETCORE_ENVIRONMENT=Production
+   ```
+
+   `RunMigrationsOnStartup` is deliberately left unset on `poesie-api-config` — production
+   relies solely on the `migrate` init container in `k8s/api-deployment.yaml`, same as ledgy.
+5. `ghcr-pull` image-pull Secret + the `imagePullSecrets` ServiceAccount patch, `-n poesie`
    (same GHCR PAT reused; Secrets are namespace-scoped so the step can't be skipped).
-5. `sudo kubectl apply -f k8s/` — `db-statefulset.yaml`, `api-deployment.yaml`,
+6. `sudo kubectl apply -f k8s/` — `db-statefulset.yaml`, `api-deployment.yaml`,
    `frontend-deployment.yaml`, `deploy-rbac.yaml`, `ingress.yaml`. Resource `requests`/`limits`
    are set from day one (this is app #2 — the node's 3.7GB RAM is now shared).
-6. Add the `poesie-ci` credential + context into `/home/deploy/.kube/config` (reuse the
+7. Add the `poesie-ci` credential + context into `/home/deploy/.kube/config` (reuse the
    existing `ledgy-k3s` cluster entry — same physical cluster).
-7. DNS: `poesie-du-lundi.m3i.io` A record → the VPS IP. cert-manager issues the certificate on first
+8. DNS: `poesie-du-lundi.m3i.io` A record → the VPS IP. cert-manager issues the certificate on first
    `Ingress` apply.
 
 ## Feeds
