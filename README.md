@@ -79,6 +79,22 @@ docker compose up --build
 
 Frontend on `:8080`, API on `:5080` (`/api/hello`, `/healthz`). Postgres has no host port.
 
+## CI/CD
+
+`.github/workflows/ci.yml` runs on every PR touching `api/`, `frontend/`, or the workflow file
+itself, and is `workflow_call`-reusable so `deploy.yml` gates the rollout on the same suite:
+
+- `test-api` — `dotnet restore/build/test PoesieDuLundi.slnx` (EF Core InMemory, no Docker).
+- `test-api-postgres` — `dotnet test tests/Persistence.SmokeTests` against a real Postgres via
+  Testcontainers; supplements `test-api`, never replaces it.
+- `test-frontend` — `npm ci && npm run build && npm run lint && npm test`.
+
+**Required status checks (manual, one-time):** Settings → Branches → branch protection rule for
+`master` → require `test-api`, `test-api-postgres`, `test-frontend` to pass before merging. Not
+yet enabled here — GitHub's Free plan doesn't offer branch protection on private repositories
+(needs GitHub Team/Pro, or making the repo public); the same constraint applies to ledgy, so
+there's no already-configured example to mirror. Enable this once the plan allows it.
+
 ## Deployment
 
 The CI/CD shape is identical to ledgy's — see
