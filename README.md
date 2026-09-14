@@ -142,6 +142,12 @@ pattern"), tracked as the infra issues in the backlog:
 8. DNS: `poesie-du-lundi.m3i.io` A record → the VPS IP. cert-manager issues the certificate on first
    `Ingress` apply.
 
+Verified live (2026-09-14): `curl https://poesie-du-lundi.m3i.io/api/hello` → `200` with no
+auth; `curl -I https://poesie-du-lundi.m3i.io/api/admin/` → `302` to
+`https://auth.m3i.io/?rd=...`, confirming Traefik matches the more specific `/api/admin` prefix
+ahead of the public `/api` rule; `openssl s_client -connect poesie-du-lundi.m3i.io:443` shows a
+Let's Encrypt certificate (`poesie-tls`) for the host, issued the same day.
+
 ## Feeds
 
 The public site publishes RSS 2.0, Atom, and JSON Feed of published poems, plus `sitemap.xml`
