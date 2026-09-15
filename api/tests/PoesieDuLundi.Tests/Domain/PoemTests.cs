@@ -52,6 +52,45 @@ public class PoemTests
     }
 
     [Fact]
+    public void New_poems_start_with_no_tags()
+    {
+        var poem = CreatePoem();
+
+        Assert.Empty(poem.Tags);
+    }
+
+    [Fact]
+    public void ChangeTags_replaces_the_tag_set()
+    {
+        var poem = CreatePoem();
+
+        poem.ChangeTags([new Slug("hiver"), new Slug("amour")]);
+
+        Assert.Equal(["amour", "hiver"], poem.Tags.Select(tag => tag.Value));
+    }
+
+    [Fact]
+    public void ChangeTags_deduplicates_and_orders_tags()
+    {
+        var poem = CreatePoem();
+
+        poem.ChangeTags([new Slug("amour"), new Slug("amour"), new Slug("hiver")]);
+
+        Assert.Equal(["amour", "hiver"], poem.Tags.Select(tag => tag.Value));
+    }
+
+    [Fact]
+    public void ChangeTags_with_an_empty_collection_clears_tags()
+    {
+        var poem = CreatePoem();
+        poem.ChangeTags([new Slug("amour")]);
+
+        poem.ChangeTags([]);
+
+        Assert.Empty(poem.Tags);
+    }
+
+    [Fact]
     public void UpdateContent_replaces_title_body_and_series()
     {
         var poem = CreatePoem();
