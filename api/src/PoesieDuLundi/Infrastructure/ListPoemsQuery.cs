@@ -20,7 +20,8 @@ public sealed class ListPoemsQuery(PoesieDuLundiDbContext dbContext)
         var poems = await query.ToListAsync(cancellationToken);
         return poems
             .Select(poem => new PoemSummary(
-                poem.Id, poem.Title, poem.Slug.Value, poem.Status, poem.PublicationDate, poem.SeriesId))
+                poem.Id, poem.Title, poem.Slug.Value, poem.Status, poem.PublicationDate, poem.SeriesId,
+                poem.Tags.Select(tag => tag.Value).ToList()))
             .ToList();
     }
 }

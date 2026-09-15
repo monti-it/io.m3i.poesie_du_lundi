@@ -138,6 +138,36 @@ public sealed class AdminPoemEndpointsTests : IClassFixture<PoesieDuLundiApiFact
     }
 
     [Fact]
+    public async Task Patch_updates_tags()
+    {
+        var id = await CreateDraftAsync("Poème étiqueté", "Un corps.");
+        using var request = AsAdmin(HttpMethod.Patch, $"/api/admin/poems/{id}");
+        request.Content = JsonContent.Create(
+            new UpdatePoemRequest("Poème étiqueté", "Un corps.", null, null, ["hiver", "amour"]));
+
+        var response = await _client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        using var getRequest = AsAdmin(HttpMethod.Get, $"/api/admin/poems/{id}");
+        var getResponse = await _client.SendAsync(getRequest);
+        var body = await getResponse.Content.ReadFromJsonAsync<PoemDto>();
+        Assert.Equal(["amour", "hiver"], body!.Tags);
+    }
+
+    [Fact]
+    public async Task Patch_with_an_invalid_tag_returns_400()
+    {
+        var id = await CreateDraftAsync("Poème mal étiqueté", "Un corps.");
+        using var request = AsAdmin(HttpMethod.Patch, $"/api/admin/poems/{id}");
+        request.Content = JsonContent.Create(
+            new UpdatePoemRequest("Poème mal étiqueté", "Un corps.", null, null, ["Not A Valid Tag!"]));
+
+        var response = await _client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Patch_of_an_unknown_poem_returns_404()
     {
         using var request = AsAdmin(HttpMethod.Patch, $"/api/admin/poems/{Guid.NewGuid()}");
