@@ -1,0 +1,9 @@
+MIME-Version: 1.0
+From: MONTI Marjan <marjan.monti@example.com>
+Date: Mon, 4 Jan 2021 09:51:11 +0100
+Message-ID: <fixture-html-only@example.com>
+To: Christophe MONTI <christophe.monti@example.com>
+Subject: Poeme en HTML seulement
+Content-Type: text/html; charset="UTF-8"
+
+<div>Un poeme <b>seulement</b> en HTML.</div>

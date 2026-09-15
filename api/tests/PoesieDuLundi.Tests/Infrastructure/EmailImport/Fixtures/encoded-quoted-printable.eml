@@ -1,0 +1,22 @@
+MIME-Version: 1.0
+From: MONTI Marjan <marjan.monti@example.com>
+Date: Mon, 4 Jan 2021 09:51:11 +0100
+Message-ID: <fixture-encoded-quoted-printable@example.com>
+To: Christophe MONTI <christophe.monti@example.com>
+Subject: =?UTF-8?Q?la_po=C3=A9sie_du_lundi?=
+Content-Type: multipart/alternative; boundary="0000boundary0000"
+
+--0000boundary0000
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+Au pied de mon arbre je vous ai attendu,=20
+Sous les =C3=A9toiles d'un ciel dev=C3=A9nu.
+
+Marjan
+--0000boundary0000
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<div>Au pied de mon arbre je vous ai attendu,<br>Sous les =C3=A9toiles d'un ciel dev=C3=A9nu.</div>
+--0000boundary0000--
