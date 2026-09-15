@@ -9,6 +9,9 @@
 Gmail/
 Gmail(*)/
 
+# import-emails (issue #52) — a local run's manifest, not project state
+import-emails-manifest.json
+
 # .NET
 bin/
 obj/
