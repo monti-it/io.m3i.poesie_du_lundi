@@ -6,7 +6,7 @@ export function Skeleton({ lines = 3 }: { lines?: number }) {
   return (
     <div role="status" aria-label="Chargement">
       {Array.from({ length: lines }, (_, index) => (
-        <p key={index} style={{ background: 'currentColor', opacity: 0.12, height: '1em', borderRadius: 4 }} />
+        <p key={index} className="skeleton-line" />
       ))}
     </div>
   )

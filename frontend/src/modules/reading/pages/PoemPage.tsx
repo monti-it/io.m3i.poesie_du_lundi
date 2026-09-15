@@ -31,16 +31,18 @@ export function PoemPage() {
   const poem = query.data
 
   return (
-    <article>
+    <article className="poem">
       <h2>{poem.title}</h2>
-      <time dateTime={poem.publicationDate}>{formatDate(poem.publicationDate)}</time>
-      {poem.series && (
-        <p>
-          Série : <Link to={`/series/${poem.series.slug}`}>{poem.series.title}</Link>
-        </p>
-      )}
+      <p className="poem-meta">
+        <time dateTime={poem.publicationDate}>{formatDate(poem.publicationDate)}</time>
+        {poem.series && (
+          <span>
+            Série : <Link to={`/series/${poem.series.slug}`}>{poem.series.title}</Link>
+          </span>
+        )}
+      </p>
       <Prose>{poem.body}</Prose>
-      <nav>
+      <nav className="poem-nav">
         {poem.previous && <Link to={`/poems/${poem.previous.slug}`}>← {poem.previous.title}</Link>}
         {poem.next && <Link to={`/poems/${poem.next.slug}`}>{poem.next.title} →</Link>}
       </nav>
