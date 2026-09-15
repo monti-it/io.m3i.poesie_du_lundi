@@ -32,6 +32,22 @@ public class PoemRepositoryTests
     }
 
     [Fact]
+    public async Task Removing_then_getting_returns_null()
+    {
+        await using var dbContext = CreateDbContext();
+        var repository = new PoemRepository(dbContext);
+        var poem = new Poem("Un titre", "Un corps.");
+        await repository.AddAsync(poem, CancellationToken.None);
+        await repository.SaveChangesAsync(CancellationToken.None);
+
+        repository.Remove(poem);
+        await repository.SaveChangesAsync(CancellationToken.None);
+
+        var reloaded = await repository.GetAsync(poem.Id, CancellationToken.None);
+        Assert.Null(reloaded);
+    }
+
+    [Fact]
     public async Task GetAsync_returns_null_for_an_unknown_id()
     {
         await using var dbContext = CreateDbContext();

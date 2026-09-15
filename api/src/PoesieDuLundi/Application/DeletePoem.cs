@@ -2,8 +2,7 @@ using PoesieDuLundi.SharedKernel;
 
 namespace PoesieDuLundi.Application;
 
-/// <summary>Pulls a published poem back to draft.</summary>
-public sealed class UnpublishPoem(IPoemRepository repository)
+public sealed class DeletePoem(IPoemRepository repository)
 {
     public async Task<Result> HandleAsync(Guid poemId, CancellationToken cancellationToken = default)
     {
@@ -13,12 +12,7 @@ public sealed class UnpublishPoem(IPoemRepository repository)
             return Result.NotFound("Poem not found.");
         }
 
-        var result = poem.Unpublish();
-        if (result.IsFailure)
-        {
-            return result;
-        }
-
+        repository.Remove(poem);
         await repository.SaveChangesAsync(cancellationToken);
         return Result.Success();
     }

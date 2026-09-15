@@ -32,6 +32,8 @@ public static class AdminEndpoints
             .Produces<MeDto>()
             .Produces(StatusCodes.Status401Unauthorized);
 
+        admin.MapAdminPoems();
+
         return app;
     }
 }

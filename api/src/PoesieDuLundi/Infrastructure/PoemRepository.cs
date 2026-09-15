@@ -12,6 +12,8 @@ public sealed class PoemRepository(PoesieDuLundiDbContext dbContext) : IPoemRepo
     public async Task AddAsync(Poem poem, CancellationToken cancellationToken) =>
         await dbContext.Poems.AddAsync(poem, cancellationToken);
 
+    public void Remove(Poem poem) => dbContext.Poems.Remove(poem);
+
     public Task<bool> HasScheduledOrPublishedForDateAsync(
         DateOnly publicationDate, CancellationToken cancellationToken) =>
         dbContext.Poems.AnyAsync(
