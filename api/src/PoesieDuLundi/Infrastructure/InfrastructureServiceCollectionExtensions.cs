@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using PoesieDuLundi.Application;
+using PoesieDuLundi.Infrastructure.Public;
 
 namespace PoesieDuLundi.Infrastructure;
 
@@ -31,6 +32,11 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<PublishPoem>();
         services.AddScoped<UnpublishPoem>();
         services.AddScoped<MaterialiseDuePoems>();
+        services.AddScoped<ListPublishedPoemsQuery>();
+        services.AddScoped<GetPublishedPoemBySlugQuery>();
+        services.AddScoped<GetThisMondayPoemQuery>();
+        services.AddScoped<GetArchiveQuery>();
+        services.AddScoped<GetSeriesBySlugQuery>();
         services.AddSingleton(TimeProvider.System);
 
         services.AddSingleton(publicationJob);
