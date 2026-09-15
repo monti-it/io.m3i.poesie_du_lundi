@@ -29,6 +29,14 @@ if (MigrationCommandLine.IsMigrateOnly(args))
     return;
 }
 
+// `dotnet PoesieDuLundi.dll import-emails <path> [--dry-run]` — the one-time Gmail-archive
+// import (issue #52), then exit without serving.
+if (ImportEmailsCommandLine.IsImportEmails(args))
+{
+    await EmailImportRunner.RunAsync(app.Services, ImportEmailsCommandLine.Parse(args));
+    return;
+}
+
 // Never in "Testing" (WebApplicationFactory-based tests swap in EF Core InMemory, which doesn't
 // support Migrate()), always in Development (zero-setup local `dotnet run`), and only on explicit
 // opt-in (RunMigrationsOnStartup=true) everywhere else — production migrates through the
