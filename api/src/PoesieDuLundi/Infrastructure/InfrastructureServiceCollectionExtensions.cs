@@ -23,6 +23,7 @@ public static class InfrastructureServiceCollectionExtensions
         });
 
         services.AddScoped<IPoemRepository, PoemRepository>();
+        services.AddScoped<ListPoemsQuery>();
         services.AddScoped<CreateDraftPoem>();
         services.AddScoped<UpdatePoem>();
         services.AddScoped<DeletePoem>();
