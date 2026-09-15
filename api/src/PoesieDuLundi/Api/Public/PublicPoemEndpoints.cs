@@ -28,10 +28,12 @@ public static class PublicPoemEndpoints
         var poems = api.MapGroup("/poems").WithTags("Public Poems");
 
         poems.MapGet("/", async (
-                int? page, int? pageSize, ListPublishedPoemsQuery query, CancellationToken cancellationToken) =>
+                int? page, int? pageSize, string? tag, ListPublishedPoemsQuery query,
+                CancellationToken cancellationToken) =>
             {
                 var result = await query.HandleAsync(
-                    Math.Max(page ?? 1, 1), Math.Clamp(pageSize ?? DefaultPageSize, 1, MaxPageSize), cancellationToken);
+                    Math.Max(page ?? 1, 1), Math.Clamp(pageSize ?? DefaultPageSize, 1, MaxPageSize), tag,
+                    cancellationToken);
                 return Results.Ok(ToDto(result));
             })
             .Produces<PagedPoemsDto>();
