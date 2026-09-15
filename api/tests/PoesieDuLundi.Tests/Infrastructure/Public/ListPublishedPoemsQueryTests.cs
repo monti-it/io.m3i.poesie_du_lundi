@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using PoesieDuLundi.Domain;
 using PoesieDuLundi.Infrastructure;
 using PoesieDuLundi.Infrastructure.Public;
+using PoesieDuLundi.SharedKernel;
 
 namespace PoesieDuLundi.Tests.Infrastructure.Public;
 
@@ -28,7 +29,7 @@ public class ListPublishedPoemsQueryTests
         await dbContext.SaveChangesAsync();
         var query = new ListPublishedPoemsQuery(dbContext, new FakeTimeProvider(Now));
 
-        var result = await query.HandleAsync(1, 20, CancellationToken.None);
+        var result = await query.HandleAsync(1, 20, null, CancellationToken.None);
 
         var summary = Assert.Single(result.Items);
         Assert.Equal(published.Id, summary.Id);
@@ -45,7 +46,7 @@ public class ListPublishedPoemsQueryTests
         await dbContext.SaveChangesAsync();
         var query = new ListPublishedPoemsQuery(dbContext, new FakeTimeProvider(Now));
 
-        var result = await query.HandleAsync(1, 20, CancellationToken.None);
+        var result = await query.HandleAsync(1, 20, null, CancellationToken.None);
 
         Assert.Contains(result.Items, poem => poem.Id == due.Id);
     }
@@ -64,11 +65,33 @@ public class ListPublishedPoemsQueryTests
         await dbContext.SaveChangesAsync();
         var query = new ListPublishedPoemsQuery(dbContext, new FakeTimeProvider(Now));
 
-        var firstPage = await query.HandleAsync(1, 1, CancellationToken.None);
-        var secondPage = await query.HandleAsync(2, 1, CancellationToken.None);
+        var firstPage = await query.HandleAsync(1, 1, null, CancellationToken.None);
+        var secondPage = await query.HandleAsync(2, 1, null, CancellationToken.None);
 
         Assert.Equal(newer.Id, Assert.Single(firstPage.Items).Id);
         Assert.Equal(older.Id, Assert.Single(secondPage.Items).Id);
         Assert.Equal(2, firstPage.TotalCount);
+    }
+
+    [Fact]
+    public async Task Filters_by_tag()
+    {
+        await using var dbContext = CreateDbContext();
+        var tagged = new Poem("Étiqueté", "Un corps.");
+        tagged.ChangeTags([new Slug("amour")]);
+        tagged.Schedule(new DateOnly(2026, 9, 14));
+        tagged.Publish();
+        var untagged = new Poem("Sans étiquette", "Un corps.");
+        untagged.Schedule(new DateOnly(2026, 9, 7));
+        untagged.Publish();
+        await dbContext.Poems.AddRangeAsync(tagged, untagged);
+        await dbContext.SaveChangesAsync();
+        var query = new ListPublishedPoemsQuery(dbContext, new FakeTimeProvider(Now));
+
+        var result = await query.HandleAsync(1, 20, "amour", CancellationToken.None);
+
+        var summary = Assert.Single(result.Items);
+        Assert.Equal(tagged.Id, summary.Id);
+        Assert.Equal(1, result.TotalCount);
     }
 }

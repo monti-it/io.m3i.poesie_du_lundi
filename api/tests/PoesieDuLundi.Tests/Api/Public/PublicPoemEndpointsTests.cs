@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using PoesieDuLundi.Api.Public;
 using PoesieDuLundi.Domain;
 using PoesieDuLundi.Infrastructure;
+using PoesieDuLundi.SharedKernel;
 using PoesieDuLundi.Tests.Api;
 
 namespace PoesieDuLundi.Tests.Api.Public;
@@ -55,6 +56,30 @@ public sealed class PublicPoemEndpointsTests : IClassFixture<PoesieDuLundiApiFac
         var body = await response.Content.ReadFromJsonAsync<PagedPoemsDto>();
         Assert.Contains(body!.Items, poem => poem.Id == published.Id);
         Assert.DoesNotContain(body.Items, poem => poem.Title == "Brouillon un");
+    }
+
+    [Fact]
+    public async Task List_filters_by_tag()
+    {
+        var tagged = await SeedPublishedPoemAsync("Publié étiqueté", new DateOnly(2020, 1, 6));
+        tagged.ChangeTags([new Slug("amour")]);
+        await SaveAsync(tagged);
+        var untagged = await SeedPublishedPoemAsync("Publié sans étiquette", new DateOnly(2020, 1, 13));
+
+        var response = await _client.GetAsync("/api/poems?tag=amour");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<PagedPoemsDto>();
+        Assert.Contains(body!.Items, poem => poem.Id == tagged.Id);
+        Assert.DoesNotContain(body.Items, poem => poem.Id == untagged.Id);
+    }
+
+    private async Task SaveAsync(Poem poem)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<PoesieDuLundiDbContext>();
+        dbContext.Poems.Update(poem);
+        await dbContext.SaveChangesAsync();
     }
 
     [Fact]

@@ -27,3 +27,7 @@ public sealed record Archive(
 
 public sealed record SeriesWithPoems(
     Guid Id, string Title, string Slug, string? Description, IReadOnlyCollection<PublicPoemSummary> Poems);
+
+/// <summary>One tag, and how many published poems carry it — <see cref="ListTagsQuery"/>'s read
+/// record for <c>GET /api/tags</c>.</summary>
+public sealed record TagCount(string Tag, int Count);

@@ -1,6 +1,7 @@
 using NSubstitute;
 using PoesieDuLundi.Application;
 using PoesieDuLundi.Domain;
+using PoesieDuLundi.SharedKernel;
 
 namespace PoesieDuLundi.Tests.Application;
 
@@ -48,6 +49,51 @@ public class UpdatePoemTests
         var useCase = new UpdatePoem(repository);
 
         var result = await useCase.HandleAsync(poem.Id, poem.Title, poem.Body, "Not A Valid Slug!", null);
+
+        Assert.True(result.IsFailure);
+        await repository.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Updates_the_tags_when_given()
+    {
+        var repository = Substitute.For<IPoemRepository>();
+        var poem = new Poem("Un titre", "Un corps.");
+        repository.GetAsync(poem.Id, Arg.Any<CancellationToken>()).Returns(poem);
+        var useCase = new UpdatePoem(repository);
+
+        var result = await useCase.HandleAsync(
+            poem.Id, poem.Title, poem.Body, null, null, tags: ["hiver", "amour"]);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(["amour", "hiver"], poem.Tags.Select(tag => tag.Value));
+    }
+
+    [Fact]
+    public async Task Leaves_tags_untouched_when_none_are_given()
+    {
+        var repository = Substitute.For<IPoemRepository>();
+        var poem = new Poem("Un titre", "Un corps.");
+        poem.ChangeTags([new Slug("amour")]);
+        repository.GetAsync(poem.Id, Arg.Any<CancellationToken>()).Returns(poem);
+        var useCase = new UpdatePoem(repository);
+
+        var result = await useCase.HandleAsync(poem.Id, poem.Title, poem.Body, null, null);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(["amour"], poem.Tags.Select(tag => tag.Value));
+    }
+
+    [Fact]
+    public async Task Fails_when_a_given_tag_is_not_a_valid_slug()
+    {
+        var repository = Substitute.For<IPoemRepository>();
+        var poem = new Poem("Un titre", "Un corps.");
+        repository.GetAsync(poem.Id, Arg.Any<CancellationToken>()).Returns(poem);
+        var useCase = new UpdatePoem(repository);
+
+        var result = await useCase.HandleAsync(
+            poem.Id, poem.Title, poem.Body, null, null, tags: ["Not A Valid Tag!"]);
 
         Assert.True(result.IsFailure);
         await repository.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());

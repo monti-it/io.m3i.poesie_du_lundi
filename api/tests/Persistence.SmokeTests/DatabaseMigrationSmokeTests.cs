@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using PoesieDuLundi.Domain;
 using PoesieDuLundi.Infrastructure;
+using PoesieDuLundi.SharedKernel;
 using Xunit;
 
 namespace PoesieDuLundi.Persistence.SmokeTests;
@@ -82,5 +83,50 @@ public sealed class DatabaseMigrationSmokeTests(PostgresFixture postgres)
         Assert.Equal(poem.Slug, reloaded.Slug);
         Assert.Equal(PoemStatus.Scheduled, reloaded.Status);
         Assert.Equal(poem.PublicationDate, reloaded.PublicationDate);
+    }
+
+    [Fact]
+    public async Task Round_trips_a_poems_tags_through_npgsql()
+    {
+        await using (var migrate = NewContext())
+        {
+            await migrate.Database.MigrateAsync();
+        }
+
+        var poem = new Poem("Chanson d'hiver", "Des mots simples.");
+        poem.ChangeTags([new Slug("hiver"), new Slug("amour")]);
+
+        await using (var write = NewContext())
+        {
+            write.Poems.Add(poem);
+            await write.SaveChangesAsync();
+        }
+
+        await using var read2 = NewContext();
+        var reloaded = await read2.Poems.SingleAsync(p => p.Id == poem.Id);
+
+        Assert.Equal(poem.Tags, reloaded.Tags);
+    }
+
+    [Fact]
+    public async Task A_poem_with_no_tags_round_trips_as_an_empty_jsonb_array()
+    {
+        await using (var migrate = NewContext())
+        {
+            await migrate.Database.MigrateAsync();
+        }
+
+        var poem = new Poem("Sans étiquette", "Des mots simples.");
+
+        await using (var write = NewContext())
+        {
+            write.Poems.Add(poem);
+            await write.SaveChangesAsync();
+        }
+
+        await using var read2 = NewContext();
+        var reloaded = await read2.Poems.SingleAsync(p => p.Id == poem.Id);
+
+        Assert.Empty(reloaded.Tags);
     }
 }

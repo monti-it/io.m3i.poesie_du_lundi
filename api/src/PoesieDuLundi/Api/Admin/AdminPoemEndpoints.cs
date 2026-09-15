@@ -6,17 +6,20 @@ namespace PoesieDuLundi.Api.Admin;
 
 public sealed record CreatePoemRequest(string Title, string Body, Guid? SeriesId);
 
-public sealed record UpdatePoemRequest(string Title, string Body, string? Slug, Guid? SeriesId);
+public sealed record UpdatePoemRequest(
+    string Title, string Body, string? Slug, Guid? SeriesId, IReadOnlyCollection<string>? Tags = null);
 
 public sealed record SchedulePoemRequest(DateOnly Date);
 
 public sealed record CreatedPoemDto(Guid Id);
 
 public sealed record PoemDto(
-    Guid Id, string Title, string Body, string Slug, string Status, DateOnly? PublicationDate, Guid? SeriesId);
+    Guid Id, string Title, string Body, string Slug, string Status, DateOnly? PublicationDate, Guid? SeriesId,
+    IReadOnlyCollection<string> Tags);
 
 public sealed record PoemSummaryDto(
-    Guid Id, string Title, string Slug, string Status, DateOnly? PublicationDate, Guid? SeriesId);
+    Guid Id, string Title, string Slug, string Status, DateOnly? PublicationDate, Guid? SeriesId,
+    IReadOnlyCollection<string> Tags);
 
 /// <summary>One endpoint per poem-management use case, thin handlers that translate a
 /// <see cref="Application"/> result into an HTTP response (issue #18) — every route here sits
@@ -61,7 +64,7 @@ public static class AdminPoemEndpoints
                 Guid id, UpdatePoemRequest request, UpdatePoem useCase, CancellationToken cancellationToken) =>
             {
                 var result = await useCase.HandleAsync(
-                    id, request.Title, request.Body, request.Slug, request.SeriesId, cancellationToken);
+                    id, request.Title, request.Body, request.Slug, request.SeriesId, request.Tags, cancellationToken);
                 return result.IsSuccess ? Results.NoContent() : result.ToProblem();
             })
             .Produces(StatusCodes.Status204NoContent)
@@ -111,8 +114,12 @@ public static class AdminPoemEndpoints
     }
 
     private static PoemDto ToDto(Poem poem) =>
-        new(poem.Id, poem.Title, poem.Body, poem.Slug.Value, poem.Status.ToString(), poem.PublicationDate, poem.SeriesId);
+        new(
+            poem.Id, poem.Title, poem.Body, poem.Slug.Value, poem.Status.ToString(), poem.PublicationDate,
+            poem.SeriesId, poem.Tags.Select(tag => tag.Value).ToList());
 
     private static PoemSummaryDto ToDto(PoemSummary summary) =>
-        new(summary.Id, summary.Title, summary.Slug, summary.Status.ToString(), summary.PublicationDate, summary.SeriesId);
+        new(
+            summary.Id, summary.Title, summary.Slug, summary.Status.ToString(), summary.PublicationDate,
+            summary.SeriesId, summary.Tags);
 }

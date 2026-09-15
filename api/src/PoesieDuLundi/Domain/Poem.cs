@@ -16,6 +16,7 @@ public sealed class Poem : AggregateRoot
     public Guid? AuthorId { get; }
     public PoemStatus Status { get; private set; }
     public DateOnly? PublicationDate { get; private set; }
+    public IReadOnlyList<Slug> Tags { get; private set; } = [];
 
     public Poem(string title, string body, Guid? seriesId = null, Guid? authorId = null)
     {
@@ -38,6 +39,11 @@ public sealed class Poem : AggregateRoot
     }
 
     public void ChangeSlug(Slug slug) => Slug = slug;
+
+    /// <summary>Replaces the whole tag set — each tag is itself a <see cref="Slug"/>, so it's
+    /// already validated by the time it reaches here; only deduplication/ordering happens.</summary>
+    public void ChangeTags(IReadOnlyCollection<Slug> tags) =>
+        Tags = tags.Distinct().OrderBy(tag => tag.Value, StringComparer.Ordinal).ToList();
 
     public Result UpdateContent(string title, string body, Guid? seriesId)
     {

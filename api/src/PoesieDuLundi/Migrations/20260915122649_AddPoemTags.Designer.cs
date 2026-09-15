@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PoesieDuLundi.Infrastructure;
@@ -11,9 +12,11 @@ using PoesieDuLundi.Infrastructure;
 namespace PoesieDuLundi.Migrations
 {
     [DbContext(typeof(PoesieDuLundiDbContext))]
-    partial class PoesieDuLundiDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260915122649_AddPoemTags")]
+    partial class AddPoemTags
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

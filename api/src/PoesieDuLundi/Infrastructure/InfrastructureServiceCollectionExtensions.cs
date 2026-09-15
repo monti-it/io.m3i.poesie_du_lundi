@@ -37,6 +37,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<GetThisMondayPoemQuery>();
         services.AddScoped<GetArchiveQuery>();
         services.AddScoped<GetSeriesBySlugQuery>();
+        services.AddScoped<ListTagsQuery>();
         services.AddSingleton(TimeProvider.System);
 
         services.AddSingleton(publicationJob);

@@ -35,7 +35,7 @@ ENGINEERING_PRACTICES.md "This app's layout").
 
 | Aggregate | Owns |
 | --- | --- |
-| `Poem` | title, body (Markdown), `Slug`, `Series` link, status (`Draft`/`Scheduled`/`Published`), `PublicationDate` |
+| `Poem` | title, body (Markdown), `Slug`, `Series` link, status (`Draft`/`Scheduled`/`Published`), `PublicationDate`, `Tags` (slugged, jsonb) |
 | `Series` | a themed cycle / "saison" grouping poems — title, slug, description, order |
 | `Author` | display name, bio, avatar; keyed by the SSO subject (`Remote-User`) |
 

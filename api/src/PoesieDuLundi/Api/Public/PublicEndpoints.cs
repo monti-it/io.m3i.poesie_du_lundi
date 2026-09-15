@@ -14,6 +14,7 @@ public static class PublicEndpoints
         api.MapPublicPoems();
         api.MapPublicArchive();
         api.MapPublicSeries();
+        api.MapPublicTags();
 
         return app;
     }
