@@ -29,9 +29,34 @@ public sealed class DatabaseMigrationSmokeTests(PostgresFixture postgres)
 
         var appliedMigrations = await read.Database.GetAppliedMigrationsAsync();
         Assert.Contains(appliedMigrations, migration => migration.EndsWith("_AddPoems", StringComparison.Ordinal));
+        Assert.Contains(appliedMigrations, migration => migration.EndsWith("_AddSeries", StringComparison.Ordinal));
 
         var canConnect = await read.Database.CanConnectAsync();
         Assert.True(canConnect);
+    }
+
+    [Fact]
+    public async Task Round_trips_a_series_through_npgsql()
+    {
+        await using (var migrate = NewContext())
+        {
+            await migrate.Database.MigrateAsync();
+        }
+
+        var series = new Series("Saison des rondes", 1, "Une saison de test");
+
+        await using (var write = NewContext())
+        {
+            write.Series.Add(series);
+            await write.SaveChangesAsync();
+        }
+
+        await using var read2 = NewContext();
+        var reloaded = await read2.Series.SingleAsync(s => s.Id == series.Id);
+
+        Assert.Equal(series.Slug, reloaded.Slug);
+        Assert.Equal(series.Title, reloaded.Title);
+        Assert.Equal(series.Description, reloaded.Description);
     }
 
     [Fact]

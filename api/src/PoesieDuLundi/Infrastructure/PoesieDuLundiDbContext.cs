@@ -8,6 +8,7 @@ public sealed class PoesieDuLundiDbContext(DbContextOptions<PoesieDuLundiDbConte
     : DbContext(options)
 {
     public DbSet<Poem> Poems => Set<Poem>();
+    public DbSet<Series> Series => Set<Series>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

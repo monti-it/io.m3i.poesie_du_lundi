@@ -1,6 +1,7 @@
 using System.Reflection;
 using PoesieDuLundi;
 using PoesieDuLundi.Api.Admin;
+using PoesieDuLundi.Api.Public;
 using PoesieDuLundi.Infrastructure;
 using Microsoft.OpenApi;
 using Npgsql;
@@ -101,6 +102,7 @@ if (ApiDocumentationPolicy.ShouldExposeDocs(app.Environment, app.Configuration))
     app.MapAdminApiDocs();
 }
 
+app.MapPublicApi();
 app.MapAdminApi();
 
 app.Run();
