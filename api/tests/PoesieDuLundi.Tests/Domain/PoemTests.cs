@@ -52,6 +52,46 @@ public class PoemTests
     }
 
     [Fact]
+    public void UpdateContent_replaces_title_body_and_series()
+    {
+        var poem = CreatePoem();
+        var seriesId = Guid.NewGuid();
+
+        var result = poem.UpdateContent("  Nouveau titre  ", "Nouveau corps.", seriesId);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("Nouveau titre", poem.Title);
+        Assert.Equal("Nouveau corps.", poem.Body);
+        Assert.Equal(seriesId, poem.SeriesId);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void UpdateContent_rejects_an_empty_or_whitespace_title(string title)
+    {
+        var poem = CreatePoem();
+
+        var result = poem.UpdateContent(title, "Un corps.", null);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Au pied de mon arbre", poem.Title);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void UpdateContent_rejects_an_empty_or_whitespace_body(string body)
+    {
+        var poem = CreatePoem();
+
+        var result = poem.UpdateContent("Un titre", body, null);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Des mots simples.", poem.Body);
+    }
+
+    [Fact]
     public void New_poems_start_as_drafts_with_no_publication_date()
     {
         var poem = CreatePoem();

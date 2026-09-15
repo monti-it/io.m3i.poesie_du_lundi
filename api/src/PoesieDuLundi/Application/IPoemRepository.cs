@@ -13,6 +13,8 @@ public interface IPoemRepository
 
     Task AddAsync(Poem poem, CancellationToken cancellationToken);
 
+    void Remove(Poem poem);
+
     /// <summary>One poem per Monday: true if a Scheduled or Published poem already occupies
     /// <paramref name="publicationDate"/>.</summary>
     Task<bool> HasScheduledOrPublishedForDateAsync(DateOnly publicationDate, CancellationToken cancellationToken);

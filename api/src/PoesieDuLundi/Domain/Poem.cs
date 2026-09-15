@@ -9,10 +9,10 @@ namespace PoesieDuLundi.Domain;
 /// </summary>
 public sealed class Poem : AggregateRoot
 {
-    public string Title { get; }
-    public string Body { get; }
+    public string Title { get; private set; }
+    public string Body { get; private set; }
     public Slug Slug { get; private set; }
-    public Guid? SeriesId { get; }
+    public Guid? SeriesId { get; private set; }
     public Guid? AuthorId { get; }
     public PoemStatus Status { get; private set; }
     public DateOnly? PublicationDate { get; private set; }
@@ -38,6 +38,24 @@ public sealed class Poem : AggregateRoot
     }
 
     public void ChangeSlug(Slug slug) => Slug = slug;
+
+    public Result UpdateContent(string title, string body, Guid? seriesId)
+    {
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            return Result.Failure("Title is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(body))
+        {
+            return Result.Failure("Body is required.");
+        }
+
+        Title = title.Trim();
+        Body = body;
+        SeriesId = seriesId;
+        return Result.Success();
+    }
 
     /// <summary>Resolved-on-read publication check: a scheduled poem counts as published once its
     /// date has arrived, independently of whether the materialising job has run yet
