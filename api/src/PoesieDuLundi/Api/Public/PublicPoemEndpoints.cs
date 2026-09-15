@@ -6,8 +6,11 @@ public sealed record SeriesLinkDto(Guid Id, string Title, string Slug);
 
 public sealed record PublicPoemSummaryDto(Guid Id, string Title, string Slug, DateOnly PublicationDate);
 
+public sealed record PublicPoemNeighborDto(string Slug, string Title);
+
 public sealed record PublicPoemDto(
-    Guid Id, string Title, string Body, string Slug, DateOnly PublicationDate, SeriesLinkDto? Series);
+    Guid Id, string Title, string Body, string Slug, DateOnly PublicationDate, SeriesLinkDto? Series,
+    PublicPoemNeighborDto? Previous, PublicPoemNeighborDto? Next);
 
 public sealed record PagedPoemsDto(
     IReadOnlyCollection<PublicPoemSummaryDto> Items, int Page, int PageSize, int TotalCount);
@@ -64,5 +67,7 @@ public static class PublicPoemEndpoints
 
     private static PublicPoemDto ToDto(PublicPoem poem) => new(
         poem.Id, poem.Title, poem.Body, poem.Slug, poem.PublicationDate,
-        poem.Series is null ? null : new SeriesLinkDto(poem.Series.Id, poem.Series.Title, poem.Series.Slug));
+        poem.Series is null ? null : new SeriesLinkDto(poem.Series.Id, poem.Series.Title, poem.Series.Slug),
+        poem.Previous is null ? null : new PublicPoemNeighborDto(poem.Previous.Slug, poem.Previous.Title),
+        poem.Next is null ? null : new PublicPoemNeighborDto(poem.Next.Slug, poem.Next.Title));
 }

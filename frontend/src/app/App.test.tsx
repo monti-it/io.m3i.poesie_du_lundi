@@ -19,16 +19,23 @@ describe('App routing', () => {
     cleanup()
   })
 
-  it('renders the reading route tree at the root', () => {
+  it('renders the reading layout at the root', () => {
     renderAt('/')
 
     expect(screen.getByRole('heading', { name: 'La poésie du lundi' })).toBeInTheDocument()
   })
 
-  it('renders a poem placeholder by slug', () => {
+  it('renders the reading layout for a poem, archive, and series route', () => {
     renderAt('/poems/au-pied-de-mon-arbre')
+    expect(screen.getByRole('heading', { name: 'La poésie du lundi' })).toBeInTheDocument()
+    cleanup()
 
-    expect(screen.getByText('Poem: au-pied-de-mon-arbre')).toBeInTheDocument()
+    renderAt('/archive')
+    expect(screen.getByRole('heading', { name: 'La poésie du lundi' })).toBeInTheDocument()
+    cleanup()
+
+    renderAt('/series/une-saison')
+    expect(screen.getByRole('heading', { name: 'La poésie du lundi' })).toBeInTheDocument()
   })
 
   it('renders the authoring route tree at /admin', () => {
