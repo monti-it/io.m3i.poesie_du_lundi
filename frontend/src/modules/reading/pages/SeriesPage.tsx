@@ -36,10 +36,10 @@ export function SeriesPage() {
       {series.poems.length === 0 ? (
         <EmptyState>Aucun poème publié dans cette série pour l'instant.</EmptyState>
       ) : (
-        <ul>
+        <ul className="poem-list">
           {series.poems.map((poem) => (
             <li key={poem.id}>
-              <Link to={`/poems/${poem.slug}`}>{poem.title}</Link>{' '}
+              <Link to={`/poems/${poem.slug}`}>{poem.title}</Link>
               <time dateTime={poem.publicationDate}>{formatDate(poem.publicationDate)}</time>
             </li>
           ))}

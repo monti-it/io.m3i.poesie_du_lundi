@@ -38,7 +38,7 @@ export function ArchivePage() {
     <>
       <section>
         <h2>Archive</h2>
-        <ul>
+        <ul className="poem-list">
           {archive.groups.map((group) => (
             <li key={`${group.year}-${group.month}`}>
               <Link to={`/archive?year=${group.year}&month=${group.month}`}>
@@ -55,10 +55,10 @@ export function ArchivePage() {
           {archive.entries.length === 0 ? (
             <EmptyState>Aucun poème pour cette période.</EmptyState>
           ) : (
-            <ul>
+            <ul className="poem-list">
               {archive.entries.map((poem) => (
                 <li key={poem.id}>
-                  <Link to={`/poems/${poem.slug}`}>{poem.title}</Link>{' '}
+                  <Link to={`/poems/${poem.slug}`}>{poem.title}</Link>
                   <time dateTime={poem.publicationDate}>{formatDate(poem.publicationDate)}</time>
                 </li>
               ))}

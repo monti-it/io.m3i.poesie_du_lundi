@@ -5,15 +5,15 @@ import { Link, Outlet } from 'react-router-dom'
 export function Layout() {
   return (
     <>
-      <header>
+      <header className="site-header">
         <h1>
           <Link to="/">La poésie du lundi</Link>
         </h1>
-        <nav>
+        <nav className="site-nav">
           <Link to="/archive">Archive</Link>
         </nav>
       </header>
-      <main>
+      <main className="site-main">
         <Outlet />
       </main>
     </>

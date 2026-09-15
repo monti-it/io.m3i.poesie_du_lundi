@@ -30,16 +30,18 @@ export function HomePage() {
     <>
       <section>
         {thisMonday.data ? (
-          <article>
+          <article className="poem">
             <h2>
               <Link to={`/poems/${thisMonday.data.slug}`}>{thisMonday.data.title}</Link>
             </h2>
-            <time dateTime={thisMonday.data.publicationDate}>{formatDate(thisMonday.data.publicationDate)}</time>
-            {thisMonday.data.series && (
-              <p>
-                Série : <Link to={`/series/${thisMonday.data.series.slug}`}>{thisMonday.data.series.title}</Link>
-              </p>
-            )}
+            <p className="poem-meta">
+              <time dateTime={thisMonday.data.publicationDate}>{formatDate(thisMonday.data.publicationDate)}</time>
+              {thisMonday.data.series && (
+                <span>
+                  Série : <Link to={`/series/${thisMonday.data.series.slug}`}>{thisMonday.data.series.title}</Link>
+                </span>
+              )}
+            </p>
             <Prose>{thisMonday.data.body}</Prose>
           </article>
         ) : (
@@ -50,10 +52,10 @@ export function HomePage() {
       {recentPoems.length > 0 && (
         <section>
           <h2>Poèmes récents</h2>
-          <ul>
+          <ul className="poem-list">
             {recentPoems.map((poem) => (
               <li key={poem.id}>
-                <Link to={`/poems/${poem.slug}`}>{poem.title}</Link>{' '}
+                <Link to={`/poems/${poem.slug}`}>{poem.title}</Link>
                 <time dateTime={poem.publicationDate}>{formatDate(poem.publicationDate)}</time>
               </li>
             ))}
