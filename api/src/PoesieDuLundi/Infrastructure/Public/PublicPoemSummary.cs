@@ -8,9 +8,14 @@ public sealed record PublicPoemSummary(Guid Id, string Title, string Slug, DateO
 /// it — not the full <see cref="SeriesWithPoems"/> read record.</summary>
 public sealed record SeriesLink(Guid Id, string Title, string Slug);
 
+/// <summary>The adjacent poem in publication-date order — what a permalink page's prev/next
+/// navigation links to.</summary>
+public sealed record PublicPoemNeighbor(string Slug, string Title);
+
 /// <summary>A flat read record for a single published poem, full body included.</summary>
 public sealed record PublicPoem(
-    Guid Id, string Title, string Body, string Slug, DateOnly PublicationDate, SeriesLink? Series);
+    Guid Id, string Title, string Body, string Slug, DateOnly PublicationDate, SeriesLink? Series,
+    PublicPoemNeighbor? Previous, PublicPoemNeighbor? Next);
 
 public sealed record PagedPoems(
     IReadOnlyCollection<PublicPoemSummary> Items, int Page, int PageSize, int TotalCount);

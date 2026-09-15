@@ -20,10 +20,11 @@ public sealed class GetPublishedPoemBySlugQuery(PoesieDuLundiDbContext dbContext
             return null;
         }
 
+        var today = Clock.Today(timeProvider);
         var poem = await dbContext.Poems.AsNoTracking()
-            .Where(PublishedPoems.AsOf(Clock.Today(timeProvider)))
+            .Where(PublishedPoems.AsOf(today))
             .SingleOrDefaultAsync(poem => poem.Slug == parsedSlug, cancellationToken);
 
-        return poem is null ? null : await PublicPoemProjection.BuildAsync(dbContext, poem, cancellationToken);
+        return poem is null ? null : await PublicPoemProjection.BuildAsync(dbContext, poem, today, cancellationToken);
     }
 }

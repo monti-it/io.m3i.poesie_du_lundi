@@ -18,6 +18,6 @@ public sealed class GetThisMondayPoemQuery(PoesieDuLundiDbContext dbContext, Tim
         var poem = await query.SingleOrDefaultAsync(poem => poem.PublicationDate == monday, cancellationToken)
             ?? await query.OrderByDescending(poem => poem.PublicationDate).FirstOrDefaultAsync(cancellationToken);
 
-        return poem is null ? null : await PublicPoemProjection.BuildAsync(dbContext, poem, cancellationToken);
+        return poem is null ? null : await PublicPoemProjection.BuildAsync(dbContext, poem, today, cancellationToken);
     }
 }

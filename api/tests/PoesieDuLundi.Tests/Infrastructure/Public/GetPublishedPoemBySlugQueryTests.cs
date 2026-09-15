@@ -31,6 +31,53 @@ public class GetPublishedPoemBySlugQueryTests
         Assert.Equal(poem.Id, result.Id);
         Assert.Equal(poem.Body, result.Body);
         Assert.Null(result.Series);
+        Assert.Null(result.Previous);
+        Assert.Null(result.Next);
+    }
+
+    [Fact]
+    public async Task Includes_prev_and_next_neighbours_by_publication_date()
+    {
+        await using var dbContext = CreateDbContext();
+        var older = new Poem("Plus ancien", "Un corps.");
+        older.Schedule(new DateOnly(2026, 9, 7));
+        older.Publish();
+        var middle = new Poem("Milieu", "Un corps.");
+        middle.Schedule(new DateOnly(2026, 9, 14));
+        middle.Publish();
+        var newer = new Poem("Plus récent", "Un corps.");
+        newer.Schedule(new DateOnly(2026, 9, 21));
+        newer.Publish();
+        await dbContext.Poems.AddRangeAsync(older, middle, newer);
+        await dbContext.SaveChangesAsync();
+        var query = new GetPublishedPoemBySlugQuery(dbContext, new FakeTimeProvider(Now));
+
+        var result = await query.HandleAsync(middle.Slug.Value, CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal(older.Slug.Value, result.Previous?.Slug);
+        Assert.Equal(newer.Slug.Value, result.Next?.Slug);
+    }
+
+    [Fact]
+    public async Task Has_no_next_neighbour_for_the_most_recent_poem()
+    {
+        await using var dbContext = CreateDbContext();
+        var older = new Poem("Plus ancien", "Un corps.");
+        older.Schedule(new DateOnly(2026, 9, 7));
+        older.Publish();
+        var mostRecent = new Poem("Le plus récent", "Un corps.");
+        mostRecent.Schedule(new DateOnly(2026, 9, 14));
+        mostRecent.Publish();
+        await dbContext.Poems.AddRangeAsync(older, mostRecent);
+        await dbContext.SaveChangesAsync();
+        var query = new GetPublishedPoemBySlugQuery(dbContext, new FakeTimeProvider(Now));
+
+        var result = await query.HandleAsync(mostRecent.Slug.Value, CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal(older.Slug.Value, result.Previous?.Slug);
+        Assert.Null(result.Next);
     }
 
     [Fact]
