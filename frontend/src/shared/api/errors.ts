@@ -21,3 +21,6 @@ export class ApiError extends Error {
     this.problem = problem
   }
 }
+
+export const isNotFound = (error: unknown): boolean => error instanceof ApiError && error.status === 404
+
