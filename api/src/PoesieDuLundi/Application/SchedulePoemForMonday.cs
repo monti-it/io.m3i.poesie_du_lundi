@@ -18,13 +18,13 @@ public sealed class SchedulePoemForMonday(IPoemRepository repository)
 
         if (await repository.HasScheduledOrPublishedForDateAsync(publicationDate, cancellationToken))
         {
-            return Result.Failure($"{publicationDate} already has a scheduled or published poem.");
+            return Result.Conflict($"{publicationDate} already has a scheduled or published poem.");
         }
 
         var poem = await repository.GetAsync(poemId, cancellationToken);
         if (poem is null)
         {
-            return Result.Failure("Poem not found.");
+            return Result.NotFound("Poem not found.");
         }
 
         var result = poem.Schedule(publicationDate);

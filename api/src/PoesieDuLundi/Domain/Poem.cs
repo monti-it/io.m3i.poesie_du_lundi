@@ -49,7 +49,7 @@ public sealed class Poem : AggregateRoot
     {
         if (Status != PoemStatus.Draft)
         {
-            return Result.Failure("Only a draft poem can be scheduled.");
+            return Result.Conflict("Only a draft poem can be scheduled.");
         }
 
         Status = PoemStatus.Scheduled;
@@ -61,7 +61,7 @@ public sealed class Poem : AggregateRoot
     {
         if (Status != PoemStatus.Scheduled)
         {
-            return Result.Failure("Only a scheduled poem can be published.");
+            return Result.Conflict("Only a scheduled poem can be published.");
         }
 
         Status = PoemStatus.Published;
@@ -73,7 +73,7 @@ public sealed class Poem : AggregateRoot
     {
         if (Status != PoemStatus.Published)
         {
-            return Result.Failure("Only a published poem can be unpublished.");
+            return Result.Conflict("Only a published poem can be unpublished.");
         }
 
         Status = PoemStatus.Draft;

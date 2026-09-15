@@ -22,6 +22,25 @@ public class ResultTests
         Assert.False(result.IsSuccess);
         Assert.True(result.IsFailure);
         Assert.Equal("that Monday already has a poem", result.Error);
+        Assert.Equal(ErrorType.Failure, result.Type);
+    }
+
+    [Fact]
+    public void NotFound_carries_the_NotFound_type()
+    {
+        var result = Result.NotFound("Poem not found.");
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(ErrorType.NotFound, result.Type);
+    }
+
+    [Fact]
+    public void Conflict_carries_the_Conflict_type()
+    {
+        var result = Result.Conflict("that Monday already has a poem");
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(ErrorType.Conflict, result.Type);
     }
 
     [Fact]

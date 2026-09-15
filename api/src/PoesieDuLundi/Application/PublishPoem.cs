@@ -10,7 +10,7 @@ public sealed class PublishPoem(IPoemRepository repository)
         var poem = await repository.GetAsync(poemId, cancellationToken);
         if (poem is null)
         {
-            return Result.Failure("Poem not found.");
+            return Result.NotFound("Poem not found.");
         }
 
         var result = poem.Publish();
