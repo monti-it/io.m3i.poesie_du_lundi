@@ -41,7 +41,13 @@ describe('App routing', () => {
   it('renders the authoring route tree at /admin', () => {
     renderAt('/admin')
 
-    expect(screen.getByRole('heading', { name: 'Admin' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Poèmes' })).toBeInTheDocument()
+  })
+
+  it('renders the new-poem editor route', () => {
+    renderAt('/admin/poems/new')
+
+    expect(screen.getByRole('heading', { name: 'Nouveau poème' })).toBeInTheDocument()
   })
 
   it('renders a not-found page for an unknown path', () => {

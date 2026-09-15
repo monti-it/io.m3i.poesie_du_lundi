@@ -33,6 +33,7 @@ public static class AdminEndpoints
             .Produces(StatusCodes.Status401Unauthorized);
 
         admin.MapAdminPoems();
+        admin.MapAdminSeries();
 
         return app;
     }
