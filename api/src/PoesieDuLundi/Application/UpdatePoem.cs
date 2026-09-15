@@ -2,7 +2,7 @@ using PoesieDuLundi.SharedKernel;
 
 namespace PoesieDuLundi.Application;
 
-/// <summary>Updates a poem's title/body/series and, optionally, its slug.</summary>
+/// <summary>Updates a poem's title/body/series and, optionally, its slug and tags.</summary>
 public sealed class UpdatePoem(IPoemRepository repository)
 {
     public async Task<Result> HandleAsync(
@@ -11,6 +11,7 @@ public sealed class UpdatePoem(IPoemRepository repository)
         string body,
         string? slug,
         Guid? seriesId,
+        IReadOnlyCollection<string>? tags = null,
         CancellationToken cancellationToken = default)
     {
         var poem = await repository.GetAsync(poemId, cancellationToken);
@@ -30,6 +31,18 @@ public sealed class UpdatePoem(IPoemRepository repository)
             try
             {
                 poem.ChangeSlug(new Slug(slug));
+            }
+            catch (ArgumentException exception)
+            {
+                return Result.Failure(exception.Message);
+            }
+        }
+
+        if (tags is not null)
+        {
+            try
+            {
+                poem.ChangeTags(tags.Select(tag => new Slug(tag)).ToList());
             }
             catch (ArgumentException exception)
             {
