@@ -2,11 +2,11 @@
 
   <ItemGroup>
     <PackageReference Include="Markdig" Version="1.3.2" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.4" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.12" />
     <!-- Reached only when a test host sets Database:Provider=InMemory (mirrors io.m3i.ledgy's
          Persistence.Kernel — issue #249 there): one config flag swaps the provider, no
          service-descriptor surgery in the test factory. -->
-    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.4" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.12" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.4">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
