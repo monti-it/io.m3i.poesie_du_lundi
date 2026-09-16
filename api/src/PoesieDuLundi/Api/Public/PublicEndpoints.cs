@@ -15,6 +15,7 @@ public static class PublicEndpoints
         api.MapPublicArchive();
         api.MapPublicSeries();
         api.MapPublicTags();
+        api.MapPublicFeeds();
 
         return app;
     }

@@ -31,3 +31,9 @@ public sealed record SeriesWithPoems(
 /// <summary>One tag, and how many published poems carry it — <see cref="ListTagsQuery"/>'s read
 /// record for <c>GET /api/tags</c>.</summary>
 public sealed record TagCount(string Tag, int Count);
+
+/// <summary>A published poem as a feed entry — body already rendered to HTML (see
+/// <see cref="MarkdownRenderer"/>), since a feed has no client-side Markdown renderer to hand raw
+/// Markdown to. <see cref="ListFeedPoemsQuery"/>'s read record for <c>GET /api/feed.xml</c>,
+/// <c>/api/atom.xml</c> and <c>/api/feed.json</c>.</summary>
+public sealed record FeedPoem(Guid Id, string Title, string BodyHtml, string Slug, DateOnly PublicationDate);
