@@ -182,4 +182,68 @@ public sealed class PublicPoemEndpointsTests : IClassFixture<PoesieDuLundiApiFac
         var offset = ((int)today.DayOfWeek - (int)DayOfWeek.Monday + 7) % 7;
         return today.AddDays(-offset);
     }
+
+    [Fact]
+    public async Task Unfurl_returns_html_with_the_poems_og_and_twitter_tags()
+    {
+        var poem = await SeedPublishedPoemAsync("Poème dévoilé", new DateOnly(2020, 3, 2));
+
+        var response = await _client.GetAsync($"/api/poems/{poem.Slug.Value}/unfurl");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("text/html", response.Content.Headers.ContentType?.MediaType);
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Contains("<title>Poème dévoilé — La poésie du lundi</title>", body);
+        Assert.Contains("""<meta property="og:title" content="Poème dévoilé">""", body);
+        Assert.Contains("""<meta property="og:type" content="article">""", body);
+        Assert.Matches($"""<link rel="canonical" href="https?://[^"]+/poems/{poem.Slug.Value}">""", body);
+        Assert.Contains("""<meta name="twitter:card" content="summary">""", body);
+        Assert.Contains("\"@type\":\"CreativeWork\"", body);
+        Assert.DoesNotContain("""<meta name="robots" content="noindex, nofollow">""", body);
+    }
+
+    [Fact]
+    public async Task Unfurl_description_is_the_poems_body_with_markdown_syntax_stripped()
+    {
+        var poem = new Poem("Poème markdown", "# Un *poème* court");
+        poem.Schedule(new DateOnly(2020, 4, 6));
+        poem.Publish();
+        await AddAsync(poem);
+
+        var response = await _client.GetAsync($"/api/poems/{poem.Slug.Value}/unfurl");
+
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Contains("""<meta name="description" content="Un poème court">""", body);
+    }
+
+    [Fact]
+    public async Task Unfurl_of_a_draft_returns_404()
+    {
+        var draft = await SeedDraftPoemAsync("Brouillon dévoilé");
+
+        var response = await _client.GetAsync($"/api/poems/{draft.Slug.Value}/unfurl");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Unfurl_of_an_unknown_slug_returns_404()
+    {
+        var response = await _client.GetAsync("/api/poems/un-slug-inconnu/unfurl");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Unfurl_with_a_valid_preview_token_marks_the_page_noindex()
+    {
+        var poem = await SeedScheduledPoemAsync("Poème dévoilé en révision", new DateOnly(2030, 2, 4));
+        var token = IssuePreviewToken(poem.Id);
+
+        var response = await _client.GetAsync($"/api/poems/{poem.Slug.Value}/unfurl?preview={token}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Contains("""<meta name="robots" content="noindex, nofollow">""", body);
+    }
 }
