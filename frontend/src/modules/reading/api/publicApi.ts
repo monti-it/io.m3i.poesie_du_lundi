@@ -59,8 +59,10 @@ export interface Series {
 
 export const fetchThisMondayPoem = () => publicFetch<Poem>('/api/poems/this-monday')
 
-export const fetchPoemBySlug = (slug: string) =>
-  publicFetch<Poem>(`/api/poems/${encodeURIComponent(slug)}`)
+export const fetchPoemBySlug = (slug: string, previewToken?: string | null) => {
+  const query = previewToken ? `?preview=${encodeURIComponent(previewToken)}` : ''
+  return publicFetch<Poem>(`/api/poems/${encodeURIComponent(slug)}${query}`)
+}
 
 export const fetchPoems = (params: { page?: number; pageSize?: number } = {}) => {
   const query = new URLSearchParams()
