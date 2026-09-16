@@ -1,19 +1,65 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useSearchParams } from 'react-router-dom'
 import { EmptyState } from '@shared/components/EmptyState'
 import { PageSkeleton } from '@shared/components/Skeleton'
 import { formatDate } from '@shared/lib/formatDate'
-import { fetchArchive } from '../api/publicApi'
+import { mondaysOfMonth, toIsoDate } from '@shared/lib/monday'
+import { fetchArchive, type PoemSummary } from '../api/publicApi'
 
 const monthFormatter = new Intl.DateTimeFormat('fr-FR', { month: 'long' })
 const monthLabel = (month: number) => monthFormatter.format(new Date(2000, month - 1, 1))
 
+const WEEK_COLUMNS = 5
+
+type WeekState = 'published' | 'skipped' | 'future'
+
+interface Week {
+  date: string
+  day: number
+  state: WeekState
+  poem: PoemSummary | null
+}
+
+interface MonthRow {
+  month: number
+  weeks: Week[]
+}
+
+// There is no backend concept of a "deliberately skipped" week - a past Monday with no matching
+// entry and a future Monday both just read as "no poem", so the distinction is inferred here from
+// today's date alone.
+function buildYearGrid(year: number, entries: PoemSummary[]): MonthRow[] {
+  const today = toIsoDate(new Date())
+  const byDate = new Map(entries.map((poem) => [poem.publicationDate, poem]))
+
+  return Array.from({ length: 12 }, (_, index) => {
+    const month = index + 1
+    const weeks = mondaysOfMonth(year, month).map((monday): Week => {
+      const date = toIsoDate(monday)
+      const poem = byDate.get(date) ?? null
+      const state: WeekState = poem ? 'published' : date > today ? 'future' : 'skipped'
+      return { date, day: monday.getDate(), state, poem }
+    })
+    return { month, weeks }
+  })
+}
+
 export function ArchivePage() {
-  const [searchParams] = useSearchParams()
-  const yearParam = searchParams.get('year')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [selected, setSelected] = useState<string | null>(null)
+
+  const explicitView = searchParams.get('view')
   const monthParam = searchParams.get('month')
-  const year = yearParam ? Number(yearParam) : undefined
-  const month = monthParam ? Number(monthParam) : undefined
+  // A bookmarked "?year=&month=" link (the old default view) still opens the list, even without
+  // an explicit "view=list".
+  const view = explicitView === 'list' ? 'list' : explicitView === 'calendar' || !monthParam ? 'calendar' : 'list'
+
+  const yearParam = searchParams.get('year')
+  const currentYear = new Date().getFullYear()
+  const year =
+    view === 'calendar' ? (yearParam ? Number(yearParam) : currentYear) : yearParam ? Number(yearParam) : undefined
+  const month = view === 'list' && monthParam ? Number(monthParam) : undefined
 
   const query = useQuery({
     queryKey: ['archive', year, month],
@@ -34,38 +80,131 @@ export function ArchivePage() {
     return <EmptyState>Aucun poème n'a encore été publié.</EmptyState>
   }
 
-  return (
-    <>
-      <section>
-        <h2>Archive</h2>
-        <ul className="poem-list">
-          {archive.groups.map((group) => (
-            <li key={`${group.year}-${group.month}`}>
-              <Link to={`/archive?year=${group.year}&month=${group.month}`}>
-                {monthLabel(group.month)} {group.year} ({group.count})
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </section>
+  const years = [...new Set([...archive.groups.map((group) => group.year), currentYear])].sort((a, b) => b - a)
+  const selectedYear = year ?? currentYear
+  const yearGrid = view === 'calendar' ? buildYearGrid(selectedYear, archive.entries) : []
+  const selectedWeek = yearGrid.flatMap((row) => row.weeks).find((week) => week.date === selected) ?? null
 
-      {year && (
-        <section>
-          <h3>{month ? `${monthLabel(month)} ${year}` : year}</h3>
-          {archive.entries.length === 0 ? (
-            <EmptyState>Aucun poème pour cette période.</EmptyState>
-          ) : (
-            <ul className="poem-list">
-              {archive.entries.map((poem) => (
-                <li key={poem.id}>
-                  <Link to={`/poems/${poem.slug}`}>{poem.title}</Link>
-                  <time dateTime={poem.publicationDate}>{formatDate(poem.publicationDate)}</time>
-                </li>
+  const setView = (next: 'calendar' | 'list') => {
+    const params = new URLSearchParams(searchParams)
+    if (next === 'calendar') {
+      params.delete('view')
+      params.delete('month')
+    } else {
+      params.set('view', 'list')
+    }
+    setSearchParams(params)
+  }
+
+  const setYear = (nextYear: number) => {
+    const params = new URLSearchParams(searchParams)
+    params.set('year', String(nextYear))
+    setSearchParams(params)
+    setSelected(null)
+  }
+
+  return (
+    <section>
+      <h2>Archive</h2>
+
+      <div className="archive-toolbar">
+        {view === 'calendar' && (
+          <div className="segmented" role="tablist" aria-label="Année">
+            {years.map((y) => (
+              <button key={y} type="button" aria-current={y === selectedYear} onClick={() => setYear(y)}>
+                {y}
+              </button>
+            ))}
+          </div>
+        )}
+        <div className="segmented" role="tablist" aria-label="Vue">
+          <button type="button" aria-pressed={view === 'calendar'} onClick={() => setView('calendar')}>
+            Calendrier
+          </button>
+          <button type="button" aria-pressed={view === 'list'} onClick={() => setView('list')}>
+            Liste
+          </button>
+        </div>
+      </div>
+
+      {view === 'calendar' ? (
+        <div className="calendar">
+          {yearGrid.map((row) => (
+            <div className="month-row" key={row.month}>
+              <span className="month-row-label">{monthLabel(row.month)}</span>
+              {row.weeks.map((week) => (
+                <button
+                  key={week.date}
+                  type="button"
+                  className={`week-cell week-cell--${week.state}`}
+                  disabled={week.state !== 'published'}
+                  aria-pressed={selected === week.date}
+                  aria-label={formatDate(week.date)}
+                  onClick={() => setSelected(week.date)}
+                >
+                  {week.day}
+                </button>
               ))}
-            </ul>
+              {Array.from({ length: WEEK_COLUMNS - row.weeks.length }, (_, index) => (
+                <span key={`spacer-${index}`} className="week-cell spacer" />
+              ))}
+            </div>
+          ))}
+
+          <div className="calendar-legend">
+            <span>
+              <i className="swatch swatch--published" />
+              Poème publié
+            </span>
+            <span>
+              <i className="swatch swatch--skipped" />
+              Semaine sans poème
+            </span>
+            <span>
+              <i className="swatch swatch--future" />À venir
+            </span>
+          </div>
+
+          {selectedWeek?.poem && (
+            <div className="calendar-detail">
+              <time dateTime={selectedWeek.date}>{formatDate(selectedWeek.date)}</time>
+              <h3>
+                <Link to={`/poems/${selectedWeek.poem.slug}`}>{selectedWeek.poem.title}</Link>
+              </h3>
+            </div>
           )}
-        </section>
+        </div>
+      ) : (
+        <>
+          <ul className="poem-list">
+            {archive.groups.map((group) => (
+              <li key={`${group.year}-${group.month}`}>
+                <Link to={`/archive?view=list&year=${group.year}&month=${group.month}`}>
+                  {monthLabel(group.month)} {group.year} ({group.count})
+                </Link>
+              </li>
+            ))}
+          </ul>
+
+          {year && (
+            <section>
+              <h3>{month ? `${monthLabel(month)} ${year}` : year}</h3>
+              {archive.entries.length === 0 ? (
+                <EmptyState>Aucun poème pour cette période.</EmptyState>
+              ) : (
+                <ul className="poem-list">
+                  {archive.entries.map((poem) => (
+                    <li key={poem.id}>
+                      <Link to={`/poems/${poem.slug}`}>{poem.title}</Link>
+                      <time dateTime={poem.publicationDate}>{formatDate(poem.publicationDate)}</time>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          )}
+        </>
       )}
-    </>
+    </section>
   )
 }
