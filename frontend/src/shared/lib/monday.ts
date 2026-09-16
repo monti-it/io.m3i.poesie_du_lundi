@@ -14,6 +14,26 @@ export function isMonday(date: string): boolean {
 export function nextMonday(today = new Date()): string {
   const daysUntilMonday = (8 - today.getDay()) % 7 || 7
   const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate() + daysUntilMonday)
+  return toIsoDate(monday)
+}
+
+/** `date` as an ISO "yyyy-MM-dd" string, built from local date parts (never `toISOString`, which
+ *  reads through UTC and can shift the day — see shared/lib/formatDate.ts). */
+export function toIsoDate(date: Date): string {
   const pad = (n: number) => String(n).padStart(2, '0')
-  return `${monday.getFullYear()}-${pad(monday.getMonth() + 1)}-${pad(monday.getDate())}`
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+}
+
+/** Every Monday that falls within the given calendar month, in order. Used to lay out a
+ *  publication calendar (one poem per Monday) without rendering a full, mostly-empty day grid. */
+export function mondaysOfMonth(year: number, month: number): Date[] {
+  const firstOfMonth = new Date(year, month - 1, 1)
+  const offsetToMonday = (1 - firstOfMonth.getDay() + 7) % 7
+  const mondays: Date[] = []
+  const cursor = new Date(year, month - 1, 1 + offsetToMonday)
+  while (cursor.getMonth() === month - 1) {
+    mondays.push(new Date(cursor))
+    cursor.setDate(cursor.getDate() + 7)
+  }
+  return mondays
 }
