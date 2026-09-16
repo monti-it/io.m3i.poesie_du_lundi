@@ -9,7 +9,10 @@ public static class InfrastructureServiceCollectionExtensions
     public static IServiceCollection AddPoesieDuLundiInfrastructure(
         this IServiceCollection services, DatabaseOptions database, PublicationJobOptions publicationJob)
     {
-        services.AddDbContext<PoesieDuLundiDbContext>(options =>
+        services.AddScoped<DomainEventDispatcher>();
+        services.AddScoped<DomainEventDispatchInterceptor>();
+
+        services.AddDbContext<PoesieDuLundiDbContext>((serviceProvider, options) =>
         {
             if (database.UsesInMemoryProvider)
             {
