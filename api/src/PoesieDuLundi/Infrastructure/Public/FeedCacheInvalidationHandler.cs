@@ -11,7 +11,7 @@ namespace PoesieDuLundi.Infrastructure.Public;
 /// docs/ENGINEERING_PRACTICES.md "Domain events" — a failed eviction just means the cache expires
 /// on its own schedule instead of immediately.
 /// </summary>
-internal sealed class FeedCacheInvalidationHandler(IOutputCacheStore outputCacheStore) :
+public sealed class FeedCacheInvalidationHandler(IOutputCacheStore outputCacheStore) :
     IDomainEventHandler<PoemPublished>, IDomainEventHandler<PoemUnpublished>
 {
     private const string FeedsCacheTag = "feeds";
