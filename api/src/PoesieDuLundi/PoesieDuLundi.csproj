@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <ItemGroup>
+    <PackageReference Include="Markdig" Version="1.3.2" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.4" />
     <!-- Reached only when a test host sets Database:Provider=InMemory (mirrors io.m3i.ledgy's
          Persistence.Kernel — issue #249 there): one config flag swaps the provider, no
@@ -13,6 +14,7 @@
     <PackageReference Include="MimeKit" Version="4.18.0" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
+    <PackageReference Include="System.ServiceModel.Syndication" Version="10.0.12" />
   </ItemGroup>
 
 </Project>

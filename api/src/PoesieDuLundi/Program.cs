@@ -20,7 +20,14 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
     options.SwaggerDoc("v1", new OpenApiInfo { Title = "PoesieDuLundi API", Version = "v1" }));
 
+// One tag ("feeds") shared by every feed format — a PoemPublished/PoemUnpublished handler
+// (FeedCacheInvalidationHandler) evicts the whole tag rather than tracking per-format keys.
+builder.Services.AddOutputCache(options =>
+    options.AddPolicy("Feeds", policy => policy.Tag("feeds").Expire(TimeSpan.FromHours(1))));
+
 var app = builder.Build();
+
+app.UseOutputCache();
 
 // `dotnet PoesieDuLundi.dll migrate` — apply pending migrations, then exit without serving. The
 // deployed k8s `api` Deployment runs this as an init container before the app container starts.

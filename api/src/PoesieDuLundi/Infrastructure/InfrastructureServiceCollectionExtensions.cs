@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using PoesieDuLundi.Application;
+using PoesieDuLundi.Domain;
 using PoesieDuLundi.Infrastructure.Public;
+using PoesieDuLundi.SharedKernel;
 
 namespace PoesieDuLundi.Infrastructure;
 
@@ -9,7 +11,10 @@ public static class InfrastructureServiceCollectionExtensions
     public static IServiceCollection AddPoesieDuLundiInfrastructure(
         this IServiceCollection services, DatabaseOptions database, PublicationJobOptions publicationJob)
     {
-        services.AddDbContext<PoesieDuLundiDbContext>(options =>
+        services.AddScoped<DomainEventDispatcher>();
+        services.AddScoped<DomainEventDispatchInterceptor>();
+
+        services.AddDbContext<PoesieDuLundiDbContext>((serviceProvider, options) =>
         {
             if (database.UsesInMemoryProvider)
             {
@@ -21,6 +26,8 @@ public static class InfrastructureServiceCollectionExtensions
                 options.UseNpgsql(database.ConnectionString, npgsql =>
                     npgsql.MigrationsHistoryTable("__EFMigrationsHistory"));
             }
+
+            options.AddInterceptors(serviceProvider.GetRequiredService<DomainEventDispatchInterceptor>());
         });
 
         services.AddScoped<IPoemRepository, PoemRepository>();
@@ -39,6 +46,9 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<GetArchiveQuery>();
         services.AddScoped<GetSeriesBySlugQuery>();
         services.AddScoped<ListTagsQuery>();
+        services.AddScoped<ListFeedPoemsQuery>();
+        services.AddScoped<IDomainEventHandler<PoemPublished>, FeedCacheInvalidationHandler>();
+        services.AddScoped<IDomainEventHandler<PoemUnpublished>, FeedCacheInvalidationHandler>();
         services.AddSingleton(TimeProvider.System);
 
         services.AddSingleton(publicationJob);
