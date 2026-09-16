@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using Microsoft.Extensions.DependencyInjection;
 using PoesieDuLundi.Api.Public;
+using PoesieDuLundi.Application;
 using PoesieDuLundi.Domain;
 using PoesieDuLundi.Infrastructure;
 using PoesieDuLundi.SharedKernel;
@@ -109,6 +110,56 @@ public sealed class PublicPoemEndpointsTests : IClassFixture<PoesieDuLundiApiFac
     public async Task Get_by_an_unknown_slug_returns_404()
     {
         var response = await _client.GetAsync("/api/poems/un-slug-inconnu");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    private async Task<Poem> SeedScheduledPoemAsync(string title, DateOnly publicationDate)
+    {
+        var poem = new Poem(title, "Un corps.");
+        poem.Schedule(publicationDate);
+        await AddAsync(poem);
+        return poem;
+    }
+
+    private string IssuePreviewToken(Guid poemId)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var tokenService = scope.ServiceProvider.GetRequiredService<IPreviewTokenService>();
+        return tokenService.Issue(poemId).Token;
+    }
+
+    [Fact]
+    public async Task Get_by_slug_with_a_valid_preview_token_returns_a_poem_not_yet_live()
+    {
+        var poem = await SeedScheduledPoemAsync("Poème en révision", new DateOnly(2030, 1, 7));
+        var token = IssuePreviewToken(poem.Id);
+
+        var response = await _client.GetAsync($"/api/poems/{poem.Slug.Value}?preview={token}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<PublicPoemDto>();
+        Assert.Equal(poem.Id, body!.Id);
+    }
+
+    [Fact]
+    public async Task Get_by_slug_with_an_invalid_preview_token_returns_404()
+    {
+        var poem = await SeedScheduledPoemAsync("Poème mal prévisualisé", new DateOnly(2030, 1, 14));
+
+        var response = await _client.GetAsync($"/api/poems/{poem.Slug.Value}?preview=not-a-real-token");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Get_by_slug_with_another_poems_preview_token_returns_404()
+    {
+        var poem = await SeedScheduledPoemAsync("Poème ciblé", new DateOnly(2030, 1, 21));
+        var otherPoem = await SeedScheduledPoemAsync("Un autre poème", new DateOnly(2030, 1, 28));
+        var tokenForOtherPoem = IssuePreviewToken(otherPoem.Id);
+
+        var response = await _client.GetAsync($"/api/poems/{poem.Slug.Value}?preview={tokenForOtherPoem}");
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }

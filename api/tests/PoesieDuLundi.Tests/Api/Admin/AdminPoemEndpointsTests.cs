@@ -327,6 +327,46 @@ public sealed class AdminPoemEndpointsTests : IClassFixture<PoesieDuLundiApiFact
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
+    [Fact]
+    public async Task Preview_link_returns_a_url_carrying_the_poems_slug_and_a_preview_token()
+    {
+        var id = await CreateDraftAsync("Poème à prévisualiser", "Un corps.");
+        using var scheduleRequest = AsAdmin(HttpMethod.Post, $"/api/admin/poems/{id}/schedule");
+        scheduleRequest.Content = JsonContent.Create(new SchedulePoemRequest(NextMonday(8)));
+        await _client.SendAsync(scheduleRequest);
+        using var getRequest = AsAdmin(HttpMethod.Get, $"/api/admin/poems/{id}");
+        var poem = await (await _client.SendAsync(getRequest)).Content.ReadFromJsonAsync<PoemDto>();
+        using var request = AsAdmin(HttpMethod.Post, $"/api/admin/poems/{id}/preview-link");
+
+        var response = await _client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<PreviewLinkDto>();
+        Assert.Contains($"/poems/{poem!.Slug}?preview=", body!.Url);
+        Assert.True(body.ExpiresAt > DateTimeOffset.UtcNow);
+    }
+
+    [Fact]
+    public async Task Preview_link_for_a_poem_not_yet_scheduled_returns_409()
+    {
+        var id = await CreateDraftAsync("Poème brouillon sans date", "Un corps.");
+        using var request = AsAdmin(HttpMethod.Post, $"/api/admin/poems/{id}/preview-link");
+
+        var response = await _client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Preview_link_for_an_unknown_poem_returns_404()
+    {
+        using var request = AsAdmin(HttpMethod.Post, $"/api/admin/poems/{Guid.NewGuid()}/preview-link");
+
+        var response = await _client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
     /// <summary>A Monday <paramref name="weeksAhead"/> weeks out. Tests share one in-memory database
     /// via <see cref="IClassFixture{T}"/> and the one-poem-per-Monday rule is global, so every test
     /// that schedules a poem needs its own week to avoid tripping over another test's poem.</summary>
