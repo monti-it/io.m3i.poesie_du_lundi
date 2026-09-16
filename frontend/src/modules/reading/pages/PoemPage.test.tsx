@@ -56,4 +56,37 @@ describe('PoemPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Page not found' })).toBeInTheDocument()
   })
+
+  it('sets the document title, description, canonical link, OpenGraph/Twitter tags, and JSON-LD', async () => {
+    const poem: Poem = {
+      id: '1',
+      title: 'Un poème',
+      body: 'Un corps.',
+      slug: 'un-poeme',
+      publicationDate: '2026-09-14',
+      series: null,
+      previous: null,
+      next: null,
+    }
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, poem)))
+
+    renderPoemPage('un-poeme')
+    await screen.findByRole('heading', { name: 'Un poème' })
+
+    expect(document.title).toBe('Un poème — La poésie du lundi')
+    expect(document.querySelector('meta[name="description"]')).toHaveAttribute('content', 'Un corps.')
+    expect(document.querySelector('link[rel="canonical"]')).toHaveAttribute(
+      'href',
+      `${window.location.origin}/poems/un-poeme`,
+    )
+    expect(document.querySelector('meta[property="og:title"]')).toHaveAttribute('content', 'Un poème')
+    expect(document.querySelector('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary')
+    const jsonLd = document.querySelector('script[type="application/ld+json"]')
+    expect(jsonLd).not.toBeNull()
+    expect(JSON.parse(jsonLd!.textContent!)).toMatchObject({
+      '@type': 'CreativeWork',
+      name: 'Un poème',
+      datePublished: '2026-09-14',
+    })
+  })
 })
