@@ -1,3 +1,4 @@
+using PoesieDuLundi.Api.Public;
 using PoesieDuLundi.Application;
 using PoesieDuLundi.Domain;
 using PoesieDuLundi.Infrastructure;
@@ -20,6 +21,8 @@ public sealed record PoemDto(
 public sealed record PoemSummaryDto(
     Guid Id, string Title, string Slug, string Status, DateOnly? PublicationDate, Guid? SeriesId,
     IReadOnlyCollection<string> Tags);
+
+public sealed record PreviewLinkDto(string Url, DateTimeOffset ExpiresAt);
 
 /// <summary>One endpoint per poem-management use case, thin handlers that translate a
 /// <see cref="Application"/> result into an HTTP response (issue #18) — every route here sits
@@ -107,6 +110,23 @@ public static class AdminPoemEndpoints
                 return result.IsSuccess ? Results.NoContent() : result.ToProblem();
             })
             .Produces(StatusCodes.Status204NoContent)
+            .Produces<ErrorDto>(StatusCodes.Status404NotFound)
+            .Produces<ErrorDto>(StatusCodes.Status409Conflict);
+
+        poems.MapPost("/{id:guid}/preview-link", async (
+                Guid id, HttpRequest request, GeneratePreviewLink useCase, CancellationToken cancellationToken) =>
+            {
+                var result = await useCase.HandleAsync(id, cancellationToken);
+                if (result.IsFailure)
+                {
+                    return result.ToProblem();
+                }
+
+                var url = $"{AbsoluteUrl.BaseUrl(request)}/poems/{Uri.EscapeDataString(result.Value.Slug)}" +
+                    $"?preview={Uri.EscapeDataString(result.Value.Token)}";
+                return Results.Ok(new PreviewLinkDto(url, result.Value.ExpiresAt));
+            })
+            .Produces<PreviewLinkDto>()
             .Produces<ErrorDto>(StatusCodes.Status404NotFound)
             .Produces<ErrorDto>(StatusCodes.Status409Conflict);
 

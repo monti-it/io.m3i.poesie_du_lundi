@@ -9,11 +9,11 @@ function jsonResponse(status: number, body: unknown) {
   return { ok: status >= 200 && status < 300, status, json: async () => body }
 }
 
-function renderPoemPage(slug: string) {
+function renderPoemPage(slug: string, search = '') {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={[`/poems/${slug}`]}>
+      <MemoryRouter initialEntries={[`/poems/${slug}${search}`]}>
         <Routes>
           <Route path="/poems/:slug" element={<PoemPage />} />
         </Routes>
@@ -88,5 +88,48 @@ describe('PoemPage', () => {
       name: 'Un poème',
       datePublished: '2026-09-14',
     })
+  })
+
+  it('adds a noindex meta tag when viewing via a preview link', async () => {
+    const poem: Poem = {
+      id: '1',
+      title: 'Un poème en révision',
+      body: 'Un corps.',
+      slug: 'un-poeme-en-revision',
+      publicationDate: '2026-09-14',
+      series: null,
+      previous: null,
+      next: null,
+    }
+    const fetchMock = vi.fn(async () => jsonResponse(200, poem))
+    vi.stubGlobal('fetch', fetchMock)
+
+    renderPoemPage('un-poeme-en-revision', '?preview=a-signed-token')
+    await screen.findByRole('heading', { name: 'Un poème en révision' })
+
+    expect(document.querySelector('meta[name="robots"]')).toHaveAttribute('content', 'noindex, nofollow')
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining('preview=a-signed-token'),
+      expect.anything(),
+    )
+  })
+
+  it('has no noindex meta tag outside preview mode', async () => {
+    const poem: Poem = {
+      id: '1',
+      title: 'Un poème',
+      body: 'Un corps.',
+      slug: 'un-poeme',
+      publicationDate: '2026-09-14',
+      series: null,
+      previous: null,
+      next: null,
+    }
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, poem)))
+
+    renderPoemPage('un-poeme')
+    await screen.findByRole('heading', { name: 'Un poème' })
+
+    expect(document.querySelector('meta[name="robots"]')).toBeNull()
   })
 })

@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using NSubstitute;
+using PoesieDuLundi.Application;
 using PoesieDuLundi.Domain;
 using PoesieDuLundi.Infrastructure;
 using PoesieDuLundi.Infrastructure.Public;
@@ -14,6 +16,14 @@ public class GetPublishedPoemBySlugQueryTests
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options);
 
+    // Never previewing in these tests — a substitute that always rejects makes that explicit.
+    private static IPreviewTokenService NoPreviewAccess()
+    {
+        var service = Substitute.For<IPreviewTokenService>();
+        service.Validate(Arg.Any<Guid>(), Arg.Any<string>()).Returns(false);
+        return service;
+    }
+
     [Fact]
     public async Task Returns_a_published_poem_by_slug()
     {
@@ -23,9 +33,9 @@ public class GetPublishedPoemBySlugQueryTests
         poem.Publish();
         await dbContext.Poems.AddAsync(poem);
         await dbContext.SaveChangesAsync();
-        var query = new GetPublishedPoemBySlugQuery(dbContext, new FakeTimeProvider(Now));
+        var query = new GetPublishedPoemBySlugQuery(dbContext, new FakeTimeProvider(Now), NoPreviewAccess());
 
-        var result = await query.HandleAsync(poem.Slug.Value, CancellationToken.None);
+        var result = await query.HandleAsync(poem.Slug.Value, previewToken: null, CancellationToken.None);
 
         Assert.NotNull(result);
         Assert.Equal(poem.Id, result.Id);
@@ -50,9 +60,9 @@ public class GetPublishedPoemBySlugQueryTests
         newer.Publish();
         await dbContext.Poems.AddRangeAsync(older, middle, newer);
         await dbContext.SaveChangesAsync();
-        var query = new GetPublishedPoemBySlugQuery(dbContext, new FakeTimeProvider(Now));
+        var query = new GetPublishedPoemBySlugQuery(dbContext, new FakeTimeProvider(Now), NoPreviewAccess());
 
-        var result = await query.HandleAsync(middle.Slug.Value, CancellationToken.None);
+        var result = await query.HandleAsync(middle.Slug.Value, previewToken: null, CancellationToken.None);
 
         Assert.NotNull(result);
         Assert.Equal(older.Slug.Value, result.Previous?.Slug);
@@ -71,9 +81,9 @@ public class GetPublishedPoemBySlugQueryTests
         mostRecent.Publish();
         await dbContext.Poems.AddRangeAsync(older, mostRecent);
         await dbContext.SaveChangesAsync();
-        var query = new GetPublishedPoemBySlugQuery(dbContext, new FakeTimeProvider(Now));
+        var query = new GetPublishedPoemBySlugQuery(dbContext, new FakeTimeProvider(Now), NoPreviewAccess());
 
-        var result = await query.HandleAsync(mostRecent.Slug.Value, CancellationToken.None);
+        var result = await query.HandleAsync(mostRecent.Slug.Value, previewToken: null, CancellationToken.None);
 
         Assert.NotNull(result);
         Assert.Equal(older.Slug.Value, result.Previous?.Slug);
@@ -91,9 +101,9 @@ public class GetPublishedPoemBySlugQueryTests
         await dbContext.Series.AddAsync(series);
         await dbContext.Poems.AddAsync(poem);
         await dbContext.SaveChangesAsync();
-        var query = new GetPublishedPoemBySlugQuery(dbContext, new FakeTimeProvider(Now));
+        var query = new GetPublishedPoemBySlugQuery(dbContext, new FakeTimeProvider(Now), NoPreviewAccess());
 
-        var result = await query.HandleAsync(poem.Slug.Value, CancellationToken.None);
+        var result = await query.HandleAsync(poem.Slug.Value, previewToken: null, CancellationToken.None);
 
         Assert.NotNull(result?.Series);
         Assert.Equal(series.Id, result.Series.Id);
@@ -107,9 +117,9 @@ public class GetPublishedPoemBySlugQueryTests
         var draft = new Poem("Brouillon", "Un corps.");
         await dbContext.Poems.AddAsync(draft);
         await dbContext.SaveChangesAsync();
-        var query = new GetPublishedPoemBySlugQuery(dbContext, new FakeTimeProvider(Now));
+        var query = new GetPublishedPoemBySlugQuery(dbContext, new FakeTimeProvider(Now), NoPreviewAccess());
 
-        var result = await query.HandleAsync(draft.Slug.Value, CancellationToken.None);
+        var result = await query.HandleAsync(draft.Slug.Value, previewToken: null, CancellationToken.None);
 
         Assert.Null(result);
     }
@@ -122,9 +132,9 @@ public class GetPublishedPoemBySlugQueryTests
         future.Schedule(new DateOnly(2026, 9, 28));
         await dbContext.Poems.AddAsync(future);
         await dbContext.SaveChangesAsync();
-        var query = new GetPublishedPoemBySlugQuery(dbContext, new FakeTimeProvider(Now));
+        var query = new GetPublishedPoemBySlugQuery(dbContext, new FakeTimeProvider(Now), NoPreviewAccess());
 
-        var result = await query.HandleAsync(future.Slug.Value, CancellationToken.None);
+        var result = await query.HandleAsync(future.Slug.Value, previewToken: null, CancellationToken.None);
 
         Assert.Null(result);
     }
@@ -133,9 +143,9 @@ public class GetPublishedPoemBySlugQueryTests
     public async Task Returns_null_for_a_malformed_slug_instead_of_throwing()
     {
         await using var dbContext = CreateDbContext();
-        var query = new GetPublishedPoemBySlugQuery(dbContext, new FakeTimeProvider(Now));
+        var query = new GetPublishedPoemBySlugQuery(dbContext, new FakeTimeProvider(Now), NoPreviewAccess());
 
-        var result = await query.HandleAsync("Not A Valid Slug!", CancellationToken.None);
+        var result = await query.HandleAsync("Not A Valid Slug!", previewToken: null, CancellationToken.None);
 
         Assert.Null(result);
     }
@@ -144,10 +154,62 @@ public class GetPublishedPoemBySlugQueryTests
     public async Task Returns_null_for_an_unknown_slug()
     {
         await using var dbContext = CreateDbContext();
-        var query = new GetPublishedPoemBySlugQuery(dbContext, new FakeTimeProvider(Now));
+        var query = new GetPublishedPoemBySlugQuery(dbContext, new FakeTimeProvider(Now), NoPreviewAccess());
 
-        var result = await query.HandleAsync("unknown-slug", CancellationToken.None);
+        var result = await query.HandleAsync("unknown-slug", previewToken: null, CancellationToken.None);
 
         Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task A_valid_preview_token_returns_a_poem_scheduled_in_the_future()
+    {
+        await using var dbContext = CreateDbContext();
+        var future = new Poem("Futur en révision", "Un corps.");
+        future.Schedule(new DateOnly(2026, 9, 28));
+        await dbContext.Poems.AddAsync(future);
+        await dbContext.SaveChangesAsync();
+        var tokenService = Substitute.For<IPreviewTokenService>();
+        tokenService.Validate(future.Id, "valid-token").Returns(true);
+        var query = new GetPublishedPoemBySlugQuery(dbContext, new FakeTimeProvider(Now), tokenService);
+
+        var result = await query.HandleAsync(future.Slug.Value, "valid-token", CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal(future.Id, result.Id);
+    }
+
+    [Fact]
+    public async Task An_invalid_preview_token_still_returns_null_for_an_unpublished_poem()
+    {
+        await using var dbContext = CreateDbContext();
+        var future = new Poem("Futur invérifiable", "Un corps.");
+        future.Schedule(new DateOnly(2026, 9, 28));
+        await dbContext.Poems.AddAsync(future);
+        await dbContext.SaveChangesAsync();
+        var tokenService = Substitute.For<IPreviewTokenService>();
+        tokenService.Validate(Arg.Any<Guid>(), Arg.Any<string>()).Returns(false);
+        var query = new GetPublishedPoemBySlugQuery(dbContext, new FakeTimeProvider(Now), tokenService);
+
+        var result = await query.HandleAsync(future.Slug.Value, "wrong-token", CancellationToken.None);
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task A_preview_token_never_reaches_a_draft_poem_with_no_publication_date()
+    {
+        await using var dbContext = CreateDbContext();
+        var draft = new Poem("Brouillon en révision", "Un corps.");
+        await dbContext.Poems.AddAsync(draft);
+        await dbContext.SaveChangesAsync();
+        var tokenService = Substitute.For<IPreviewTokenService>();
+        tokenService.Validate(draft.Id, "valid-token").Returns(true);
+        var query = new GetPublishedPoemBySlugQuery(dbContext, new FakeTimeProvider(Now), tokenService);
+
+        var result = await query.HandleAsync(draft.Slug.Value, "valid-token", CancellationToken.None);
+
+        Assert.Null(result);
+        tokenService.DidNotReceive().Validate(Arg.Any<Guid>(), Arg.Any<string>());
     }
 }

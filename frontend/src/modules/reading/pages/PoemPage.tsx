@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { NotFoundPage } from '@app/NotFoundPage'
 import { isNotFound } from '@shared/api/errors'
 import { EmptyState } from '@shared/components/EmptyState'
@@ -15,7 +15,7 @@ const SiteName = 'La poésie du lundi'
 // React 19 hoists <title>/<meta>/<link> rendered anywhere in the tree into <head> — no
 // react-helmet needed. This still only runs client-side (see docs/ARCHITECTURE.md "Feeds &
 // SEO" for what that does and doesn't cover for crawlers).
-function PoemHead({ poem }: { poem: Poem }) {
+function PoemHead({ poem, isPreview }: { poem: Poem; isPreview: boolean }) {
   const canonicalUrl = `${window.location.origin}/poems/${poem.slug}`
   const description = excerpt(poem.body)
   const jsonLd = {
@@ -31,6 +31,7 @@ function PoemHead({ poem }: { poem: Poem }) {
   return (
     <>
       <title>{`${poem.title} — ${SiteName}`}</title>
+      {isPreview && <meta name="robots" content="noindex, nofollow" />}
       <meta name="description" content={description} />
       <link rel="canonical" href={canonicalUrl} />
       <meta property="og:type" content="article" />
@@ -48,9 +49,11 @@ function PoemHead({ poem }: { poem: Poem }) {
 
 export function PoemPage() {
   const { slug } = useParams<{ slug: string }>()
+  const [searchParams] = useSearchParams()
+  const previewToken = searchParams.get('preview')
   const query = useQuery({
-    queryKey: ['poem', slug],
-    queryFn: () => fetchPoemBySlug(slug!),
+    queryKey: ['poem', slug, previewToken],
+    queryFn: () => fetchPoemBySlug(slug!, previewToken),
     enabled: Boolean(slug),
   })
 
@@ -70,7 +73,7 @@ export function PoemPage() {
 
   return (
     <article className="poem">
-      <PoemHead poem={poem} />
+      <PoemHead poem={poem} isPreview={Boolean(previewToken)} />
       <h2>{poem.title}</h2>
       <p className="poem-meta">
         <time dateTime={poem.publicationDate}>{formatDate(poem.publicationDate)}</time>

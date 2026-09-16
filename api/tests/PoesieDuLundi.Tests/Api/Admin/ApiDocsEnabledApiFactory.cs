@@ -22,6 +22,10 @@ public sealed class ApiDocsEnabledApiFactory : WebApplicationFactory<Program>
         builder.UseEnvironment("Staging");
         builder.UseSetting("Database:Provider", "InMemory");
         builder.UseSetting("Database:InMemoryDatabaseName", _databaseName);
+        // Outside Development/Testing, PreviewLinkStartupPolicy requires a real Preview:SigningKey
+        // (see its own docs) — this factory simulates a real deployed environment, so it supplies
+        // one rather than relying on the dev-only fallback.
+        builder.UseSetting("Preview:SigningKey", "a-staging-test-signing-key");
     }
 
     protected override IHost CreateHost(IHostBuilder builder)

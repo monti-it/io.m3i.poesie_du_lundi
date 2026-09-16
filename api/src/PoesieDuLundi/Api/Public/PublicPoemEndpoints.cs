@@ -50,9 +50,10 @@ public static class PublicPoemEndpoints
             .Produces<ErrorDto>(StatusCodes.Status404NotFound);
 
         poems.MapGet("/{slug}", async (
-                string slug, GetPublishedPoemBySlugQuery query, CancellationToken cancellationToken) =>
+                string slug, string? preview, GetPublishedPoemBySlugQuery query,
+                CancellationToken cancellationToken) =>
             {
-                var poem = await query.HandleAsync(slug, cancellationToken);
+                var poem = await query.HandleAsync(slug, preview, cancellationToken);
                 return poem is null ? Results.NotFound(new ErrorDto("Poem not found.")) : Results.Ok(ToDto(poem));
             })
             .Produces<PublicPoemDto>()

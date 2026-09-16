@@ -9,7 +9,8 @@ namespace PoesieDuLundi.Infrastructure;
 public static class InfrastructureServiceCollectionExtensions
 {
     public static IServiceCollection AddPoesieDuLundiInfrastructure(
-        this IServiceCollection services, DatabaseOptions database, PublicationJobOptions publicationJob)
+        this IServiceCollection services, DatabaseOptions database, PublicationJobOptions publicationJob,
+        PreviewLinkOptions previewLink)
     {
         services.AddScoped<DomainEventDispatcher>();
         services.AddScoped<DomainEventDispatchInterceptor>();
@@ -42,6 +43,9 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<MaterialiseDuePoems>();
         services.AddScoped<ListPublishedPoemsQuery>();
         services.AddScoped<GetPublishedPoemBySlugQuery>();
+        services.AddScoped<GeneratePreviewLink>();
+        services.AddSingleton(previewLink);
+        services.AddSingleton<IPreviewTokenService, PreviewTokenService>();
         services.AddScoped<GetThisMondayPoemQuery>();
         services.AddScoped<GetArchiveQuery>();
         services.AddScoped<GetSeriesBySlugQuery>();
