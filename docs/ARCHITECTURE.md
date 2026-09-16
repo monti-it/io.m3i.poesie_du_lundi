@@ -82,26 +82,26 @@ the same reason. The public Ingress (`k8s/ingress.yaml`) and `frontend/nginx.con
 explicit `/robots.txt` / `/sitemap.xml` route to the API ahead of the frontend's catch-all, since
 both would otherwise fall through to the SPA's `index.html`.
 
-**Rendering strategy for per-poem meta tags (SSR/prerendering vs. edge injection): client-side
-for MVP, not either of those.** The frontend is a plain Vite + React CSR SPA served as static
-files by nginx (see "Request flow" above) — there is no SSR runtime, and adding one (or a
-prerendering/edge-injection layer sitting in front of nginx) is a meaningful infrastructure
-change, not something to bolt on inside this feature. `PoemPage` instead sets its `<title>`,
+**Rendering strategy for per-poem meta tags: client-side for real browsers, a User-Agent edge
+shim for link-unfurling bots (issue #83).** The frontend is a plain Vite + React CSR SPA served as
+static files by nginx (see "Request flow" above) — there is no SSR runtime, and adding one is a
+meaningful infrastructure change this feature doesn't need. `PoemPage` sets its `<title>`,
 `<meta name="description">`, canonical `<link>`, OpenGraph/Twitter tags, and `CreativeWork`
 JSON-LD via React 19's native document-metadata support (`<title>`/`<meta>`/`<link>` rendered
-anywhere in the tree are hoisted into `<head>`) — no `react-helmet` dependency needed.
+anywhere in the tree are hoisted into `<head>`) — no `react-helmet` dependency needed. That covers
+**Google and Bing, which render JavaScript before indexing.**
 
-The tradeoff this accepts: **Google and Bing render JavaScript before indexing**, so search
-discovery and rich snippets work correctly. **Bots that unfurl link previews (Twitter/X,
-Facebook, Slack, Discord, …) do not execute JavaScript** — they read the OpenGraph/Twitter tags
-straight out of the initial HTML response, which still only carries the static, site-wide
-`<title>` from `frontend/index.html`. Sharing a poem link on those platforms will not show a
-per-poem preview until that HTML is server-rendered or injected at the edge. For a low-traffic
-poetry blog at MVP, search indexing is the priority and social-card previews are a nice-to-have;
-if that changes, the fix is a dedicated follow-up (either a small edge/reverse-proxy shim that
-injects OG tags for `/poems/{slug}` based on `User-Agent` — Google's documented "dynamic
-rendering" pattern — or migrating the frontend to an SSR-capable framework), not a retrofit of
-this approach.
+**Bots that unfurl link previews (Twitter/X, Facebook, Slack, Discord, …) do not execute
+JavaScript** — they read OpenGraph/Twitter tags straight out of the initial HTML response, so
+they never see `PoemPage`'s tags. For those specifically, `frontend/nginx.conf` matches
+`$http_user_agent` against a `map` of known unfurl-bot substrings (Google's documented "dynamic
+rendering" pattern) and, only for a `/poems/{slug}` request from one of them, rewrites to
+`GET /api/poems/{slug}/unfurl` (`PublicPoemEndpoints`) instead of falling through to the SPA. That
+endpoint server-renders a minimal HTML document with the same `<title>`/description/canonical/OG/
+Twitter/JSON-LD content `PoemHead` would have produced client-side (description via `Excerpt`, a
+server-side port of `frontend/src/shared/lib/excerpt.ts`'s Markdown-to-plain-text stripping) — no
+`og:image` yet, since that's #31, deliberately out of scope here. Every other User-Agent, bot or
+not, still gets the ordinary SPA route and never touches this endpoint.
 
 ## Draft preview links
 
