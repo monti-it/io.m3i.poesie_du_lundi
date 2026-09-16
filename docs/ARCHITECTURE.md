@@ -102,3 +102,21 @@ if that changes, the fix is a dedicated follow-up (either a small edge/reverse-p
 injects OG tags for `/poems/{slug}` based on `User-Agent` — Google's documented "dynamic
 rendering" pattern — or migrating the frontend to an SSR-capable framework), not a retrofit of
 this approach.
+
+## Draft preview links
+
+`POST /api/admin/poems/{id}/preview-link` lets an author share a not-yet-published poem for
+review without publishing it. The token is a stateless HMAC-SHA256 signature over the poem id and
+an expiry (`PreviewTokenService`, `Preview:SigningKey`) — no DB row, so it costs nothing to issue
+and needs no cleanup. `GET /api/poems/{slug}?preview=<token>` accepts it in place of the normal
+published check, only for the one poem id the token was signed for. Only a poem that already has
+a `PublicationDate` (Scheduled or Published) can be previewed — a bare Draft has no timeline
+position (prev/next neighbours, the displayed date) to render, so it must be scheduled first
+(409 otherwise). The previewed page carries `<meta name="robots" content="noindex, nofollow">`
+(`PoemPage`, only when a `preview` token is present) so a leaked or crawled link doesn't get
+indexed.
+
+`Preview:SigningKey` must be set outside `Development`/`Testing` (`PreviewLinkStartupPolicy`
+fails fast at startup otherwise) — production reads it from the same `poesie-api-config` k8s
+Secret as the database connection string (`Preview__SigningKey` env var), kept stable across
+replicas since the token carries no DB row to reconcile against.
