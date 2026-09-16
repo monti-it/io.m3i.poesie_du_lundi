@@ -9,6 +9,9 @@ public sealed class PoemRepository(PoesieDuLundiDbContext dbContext) : IPoemRepo
     public Task<Poem?> GetAsync(Guid id, CancellationToken cancellationToken) =>
         dbContext.Poems.SingleOrDefaultAsync(poem => poem.Id == id, cancellationToken);
 
+    public async Task<IReadOnlyCollection<Poem>> GetAllAsync(CancellationToken cancellationToken) =>
+        await dbContext.Poems.ToListAsync(cancellationToken);
+
     public async Task AddAsync(Poem poem, CancellationToken cancellationToken) =>
         await dbContext.Poems.AddAsync(poem, cancellationToken);
 

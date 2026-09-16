@@ -45,6 +45,14 @@ if (ImportEmailsCommandLine.IsImportEmails(args))
     return;
 }
 
+// `dotnet PoesieDuLundi.dll strip-title-prefix [--dry-run]` — the one-time "La poésie du lundi :"
+// title-prefix cleanup (issue #62), then exit without serving.
+if (StripTitlePrefixCommandLine.IsStripTitlePrefix(args))
+{
+    await StripTitlePrefixRunner.RunAsync(app.Services, StripTitlePrefixCommandLine.Parse(args));
+    return;
+}
+
 // Never in "Testing" (WebApplicationFactory-based tests swap in EF Core InMemory, which doesn't
 // support Migrate()), always in Development (zero-setup local `dotnet run`), and only on explicit
 // opt-in (RunMigrationsOnStartup=true) everywhere else — production migrates through the
