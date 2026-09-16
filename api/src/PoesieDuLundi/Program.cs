@@ -13,7 +13,8 @@ var database = new DatabaseOptions(
     builder.Configuration["Database:Provider"],
     builder.Configuration["Database:InMemoryDatabaseName"]);
 var publicationJob = new PublicationJobOptions(PublicationJobStartupPolicy.GetInterval(builder.Configuration));
-builder.Services.AddPoesieDuLundiInfrastructure(database, publicationJob);
+var previewLink = PreviewLinkStartupPolicy.GetOptions(builder.Environment, builder.Configuration);
+builder.Services.AddPoesieDuLundiInfrastructure(database, publicationJob, previewLink);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ForwardAuthIdentityProvider>();
 builder.Services.AddEndpointsApiExplorer();
