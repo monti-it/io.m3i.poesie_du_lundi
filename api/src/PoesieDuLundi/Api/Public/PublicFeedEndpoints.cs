@@ -53,7 +53,7 @@ public static class PublicFeedEndpoints
         api.MapGet("/feed.json", async (HttpContext httpContext, ListFeedPoemsQuery query, CancellationToken cancellationToken) =>
             {
                 var poems = await query.HandleAsync(cancellationToken);
-                var baseUrl = AbsoluteBaseUrl(httpContext.Request);
+                var baseUrl = AbsoluteUrl.BaseUrl(httpContext.Request);
                 var jsonFeed = new JsonFeedDto(
                     "https://jsonfeed.org/version/1.1", FeedTitle, baseUrl, $"{baseUrl}/api/feed.json", FeedDescription,
                     poems.Select(poem => ToJsonFeedItem(poem, baseUrl)).ToList());
@@ -69,7 +69,7 @@ public static class PublicFeedEndpoints
         HttpContext httpContext, ListFeedPoemsQuery query, CancellationToken cancellationToken)
     {
         var poems = await query.HandleAsync(cancellationToken);
-        var baseUrl = AbsoluteBaseUrl(httpContext.Request);
+        var baseUrl = AbsoluteUrl.BaseUrl(httpContext.Request);
         var items = poems.Select(poem => ToSyndicationItem(poem, baseUrl)).ToList();
 
         var updated = poems.Count > 0
@@ -109,18 +109,6 @@ public static class PublicFeedEndpoints
 
     private static DateTimeOffset PublishedAt(DateOnly publicationDate) =>
         new(publicationDate.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
-
-    // Same-origin by design (docs/ENGINEERING_PRACTICES.md "Identity, tenancy, and public vs
-    // admin") — nginx forwards the original Host and sets X-Forwarded-Proto (frontend/nginx.conf),
-    // so reading it directly here is enough without a full ForwardedHeaders middleware/trusted-
-    // proxy setup.
-    private static string AbsoluteBaseUrl(HttpRequest request)
-    {
-        var scheme = request.Headers.TryGetValue("X-Forwarded-Proto", out var forwardedProto)
-            ? forwardedProto.ToString()
-            : request.Scheme;
-        return $"{scheme}://{request.Host}";
-    }
 
     private static IResult WriteXml(SyndicationFeed feed, bool asAtom)
     {

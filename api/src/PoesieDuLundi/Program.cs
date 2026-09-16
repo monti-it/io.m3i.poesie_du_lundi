@@ -109,6 +109,8 @@ if (ApiDocumentationPolicy.ShouldExposeDocs(app.Environment, app.Configuration))
     app.MapAdminApiDocs();
 }
 
+// Root-level, not under /api — see PublicSeoEndpoints for why.
+app.MapPublicSeo();
 app.MapPublicApi();
 app.MapAdminApi();
 

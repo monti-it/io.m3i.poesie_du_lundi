@@ -47,6 +47,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<GetSeriesBySlugQuery>();
         services.AddScoped<ListTagsQuery>();
         services.AddScoped<ListFeedPoemsQuery>();
+        services.AddScoped<ListSitemapPoemsQuery>();
         services.AddScoped<IDomainEventHandler<PoemPublished>, FeedCacheInvalidationHandler>();
         services.AddScoped<IDomainEventHandler<PoemUnpublished>, FeedCacheInvalidationHandler>();
         services.AddSingleton(TimeProvider.System);

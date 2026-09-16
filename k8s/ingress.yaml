@@ -27,6 +27,23 @@ spec:
                 name: poesie-api
                 port:
                   number: 80
+          # robots.txt is only honoured at the document root, and the sitemap sits next to it
+          # for the same reason (PublicSeoEndpoints) — routed to the API directly, ahead of the
+          # frontend's / catch-all, since neither lives under /api.
+          - path: /robots.txt
+            pathType: Exact
+            backend:
+              service:
+                name: poesie-api
+                port:
+                  number: 80
+          - path: /sitemap.xml
+            pathType: Exact
+            backend:
+              service:
+                name: poesie-api
+                port:
+                  number: 80
           - path: /
             pathType: Prefix
             backend:
