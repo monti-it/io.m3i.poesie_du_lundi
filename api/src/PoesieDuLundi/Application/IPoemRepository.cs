@@ -11,10 +11,6 @@ public interface IPoemRepository
 {
     Task<Poem?> GetAsync(Guid id, CancellationToken cancellationToken);
 
-    /// <summary>Every poem, regardless of status — for one-off, whole-table maintenance (e.g. the
-    /// <c>strip-title-prefix</c> tool, issue #62), not for anything request-scoped.</summary>
-    Task<IReadOnlyCollection<Poem>> GetAllAsync(CancellationToken cancellationToken);
-
     Task AddAsync(Poem poem, CancellationToken cancellationToken);
 
     void Remove(Poem poem);
