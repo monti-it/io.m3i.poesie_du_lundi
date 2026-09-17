@@ -96,8 +96,8 @@ public class ImportEmailArchiveTests
         var manifestPath = Path.Combine(root, "manifest.json");
         try
         {
-            EmlFixtureBuilder.Write(root, "a.eml", "la poésie du lundi", "Corps A", AMonday, "a@example.com");
-            EmlFixtureBuilder.Write(root, "b.eml", "la poésie du lundi", "Corps B", ATuesday, "b@example.com");
+            EmlFixtureBuilder.Write(root, "a.eml", "la poésie du lundi : Un poeme", "Corps A", AMonday, "a@example.com");
+            EmlFixtureBuilder.Write(root, "b.eml", "la poésie du lundi : Un poeme", "Corps B", ATuesday, "b@example.com");
             var repository = Substitute.For<IPoemRepository>();
 
             var report = await new ImportEmailArchive(repository).ExecuteAsync(root, manifestPath, dryRun: false);

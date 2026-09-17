@@ -15,7 +15,7 @@ public class EmlEmailParserTests
 
         Assert.True(outcome.IsSuccess);
         var email = outcome.Email!;
-        Assert.Equal("la poésie du lundi", email.Title);
+        Assert.Equal("Sous les étoiles", email.Title);
         Assert.Contains("Sous les étoiles d'un ciel devénu.", email.Body);
         Assert.Equal(new DateOnly(2021, 1, 4), email.PublicationDate);
         Assert.Equal("fixture-encoded-quoted-printable@example.com", email.MessageId);
@@ -57,6 +57,26 @@ public class EmlEmailParserTests
 
         Assert.True(outcome.IsSuccess);
         Assert.Contains(path, outcome.Email!.MessageId);
+    }
+
+    [Fact]
+    public void Skips_a_reply_thread_email_instead_of_importing_the_reply_as_a_poem()
+    {
+        var outcome = EmlEmailParser.Parse(FixturePath("reply-thread.eml"));
+
+        Assert.False(outcome.IsSuccess);
+        Assert.Contains("reply", outcome.SkipReason);
+    }
+
+    [Fact]
+    public void Strips_the_AVG_signature_footer_from_the_body()
+    {
+        var outcome = EmlEmailParser.Parse(FixturePath("avg-signature.eml"));
+
+        Assert.True(outcome.IsSuccess);
+        Assert.Equal("Sous les étoiles", outcome.Email!.Title);
+        Assert.Equal("Sous les étoiles d'un ciel devénu.\n\nMarjan", outcome.Email.Body);
+        Assert.DoesNotContain("avg.com", outcome.Email.Body);
     }
 
     [Fact]

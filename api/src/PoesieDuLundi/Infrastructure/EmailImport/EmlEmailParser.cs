@@ -6,7 +6,8 @@ namespace PoesieDuLundi.Infrastructure.EmailImport;
 
 /// <summary>Parses one raw RFC 822 <c>.eml</c> file (a real Gmail export: multipart, quoted-printable,
 /// RFC 2047 encoded-word subjects) into a <see cref="ParsedEmail"/> — MimeKit does the MIME/charset
-/// decoding, this class only maps the result onto what a <see cref="Domain.Poem"/> needs.</summary>
+/// decoding, this class maps the result onto what a <see cref="Domain.Poem"/> needs: title via
+/// <see cref="EmailTitleResolver"/>, body via <see cref="EmailBodyCleanup"/>.</summary>
 public static partial class EmlEmailParser
 {
     public static EmailParseOutcome Parse(string filePath)
@@ -37,9 +38,21 @@ public static partial class EmlEmailParser
             return EmailParseOutcome.Skip("has no text or HTML body to use as poem content.");
         }
 
+        body = EmailBodyCleanup.StripAvgSignature(body.Trim());
+        if (string.IsNullOrWhiteSpace(body))
+        {
+            return EmailParseOutcome.Skip("has no content left once the AVG signature footer is stripped.");
+        }
+
         if (message.Date == default)
         {
             return EmailParseOutcome.Skip("has no Date header to use as a publication date.");
+        }
+
+        var (title, skipReason) = EmailTitleResolver.Resolve(message.Subject, body);
+        if (skipReason is not null)
+        {
+            return EmailParseOutcome.Skip(skipReason);
         }
 
         // MessageId is the Gmail export's own de-dup key — the same email can appear in more than
@@ -51,8 +64,8 @@ public static partial class EmlEmailParser
 
         return EmailParseOutcome.Success(new ParsedEmail(
             messageId,
-            message.Subject.Trim(),
-            body.Trim(),
+            title!,
+            body,
             DateOnly.FromDateTime(message.Date.Date),
             filePath));
     }
