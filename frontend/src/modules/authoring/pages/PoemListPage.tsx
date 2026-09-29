@@ -19,7 +19,7 @@ function statusLabel(poem: PoemSummary): string {
     case 'Scheduled':
       return `Programmé pour le ${formatDate(poem.publicationDate!)}`
     case 'Published':
-      return 'Publié'
+      return `Publié le ${formatDate(poem.publicationDate!)}`
   }
 }
 

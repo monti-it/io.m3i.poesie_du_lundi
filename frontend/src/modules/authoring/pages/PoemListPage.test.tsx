@@ -41,6 +41,15 @@ describe('PoemListPage', () => {
         seriesId: null,
         tags: [],
       },
+      {
+        id: '3',
+        title: 'Un poème publié',
+        slug: 'un-poeme-publie',
+        status: 'Published',
+        publicationDate: '2026-09-14',
+        seriesId: null,
+        tags: [],
+      },
     ]
     vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, poems)))
 
@@ -50,6 +59,7 @@ describe('PoemListPage', () => {
     const list = within(screen.getByRole('list'))
     expect(list.getByText('Brouillon')).toBeInTheDocument()
     expect(list.getByText(/Programmé pour le/)).toBeInTheDocument()
+    expect(list.getByText(/Publié le/)).toBeInTheDocument()
   })
 
   it('shows an empty state when there are no poems', async () => {
