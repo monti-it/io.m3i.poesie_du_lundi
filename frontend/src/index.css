@@ -469,6 +469,17 @@ time {
   margin: 0;
 }
 
+/* Archive list: one section per month of the selected year */
+
+.archive-list section + section {
+  margin-top: var(--space-3);
+}
+
+.archive-list h3 {
+  margin: 0;
+  scroll-margin-top: var(--space-2);
+}
+
 .skeleton-line {
   background: currentColor;
   opacity: 0.12;

@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, onTestFinished, vi } from 'vitest'
 import type { Archive } from '../api/publicApi'
 import { ArchivePage } from './ArchivePage'
 
@@ -81,41 +81,85 @@ describe('ArchivePage', () => {
     })
   })
 
-  describe('list view (fallback)', () => {
-    it('shows the year/month groups as a browsable tree', async () => {
-      const archive: Archive = {
-        groups: [{ year: 2026, month: 3, count: 2 }],
-        entries: [],
-      }
-      vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, archive)))
+  describe('list view', () => {
+    const archive: Archive = {
+      groups: [
+        { year: 2026, month: 9, count: 2 },
+        { year: 2026, month: 3, count: 1 },
+        { year: 2025, month: 12, count: 1 },
+      ],
+      entries: [
+        { id: '1', title: 'Poème de mars', slug: 'poeme-de-mars', publicationDate: '2026-03-02' },
+        { id: '2', title: 'Fin septembre', slug: 'fin-septembre', publicationDate: '2026-09-28' },
+        { id: '3', title: 'Début septembre', slug: 'debut-septembre', publicationDate: '2026-09-07' },
+      ],
+    }
 
-      renderArchivePage('/archive?view=list')
+    // Answers /api/archive for whichever year is asked; returns the requested URLs.
+    function stubArchive() {
+      const urls: string[] = []
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async (input: RequestInfo | URL) => {
+          const url = String(input)
+          urls.push(url)
+          const year = new URL(url, 'http://localhost').searchParams.get('year')
+          return jsonResponse(200, year === '2026' ? archive : { groups: archive.groups, entries: [] })
+        }),
+      )
+      return urls
+    }
 
-      expect(await screen.findByRole('link', { name: /mars 2026 \(2\)/ })).toBeInTheDocument()
+    it("shows every poem of the year under month headings, newest first", async () => {
+      const urls = stubArchive()
+
+      renderArchivePage('/archive?view=list&year=2026')
+
+      const headings = await screen.findAllByRole('heading', { level: 3 })
+      expect(headings.map((heading) => heading.textContent)).toEqual(['septembre 2026', 'mars 2026'])
+      expect(headings[0]).toHaveAttribute('id', '2026-09')
+      expect(screen.getAllByRole('link').map((link) => link.textContent)).toEqual([
+        'Fin septembre',
+        'Début septembre',
+        'Poème de mars',
+      ])
+      expect(screen.getByText('28 septembre 2026')).toHaveAttribute('datetime', '2026-09-28')
+      expect(urls).toEqual(['/api/archive?year=2026'])
     })
 
-    it('shows the entries for a chosen year and month', async () => {
-      const archive: Archive = {
-        groups: [{ year: 2026, month: 3, count: 1 }],
-        entries: [{ id: '1', title: 'Poème de mars', slug: 'poeme-de-mars', publicationDate: '2026-03-02' }],
-      }
-      vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, archive)))
+    it('keeps the selected year when switching years and views', async () => {
+      const urls = stubArchive()
 
-      renderArchivePage('/archive?view=list&year=2026&month=3')
+      renderArchivePage('/archive?view=list&year=2026')
+      await screen.findByRole('heading', { name: 'septembre 2026' })
 
-      expect(await screen.findByText('Poème de mars')).toBeInTheDocument()
+      await userEvent.click(screen.getByRole('button', { name: '2025' }))
+      expect(await screen.findByText('Aucun poème publié en 2025.')).toBeInTheDocument()
+      expect(urls.at(-1)).toBe('/api/archive?year=2025')
+
+      await userEvent.click(screen.getByRole('button', { name: 'Calendrier' }))
+      expect(await screen.findByRole('button', { name: '1 décembre 2025' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: '2025' })).toHaveAttribute('aria-current', 'true')
     })
 
-    it('is still reached from a bookmarked year/month link with no explicit view param', async () => {
-      const archive: Archive = {
-        groups: [{ year: 2026, month: 3, count: 1 }],
-        entries: [{ id: '1', title: 'Poème de mars', slug: 'poeme-de-mars', publicationDate: '2026-03-02' }],
-      }
-      vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, archive)))
+    it.each(['/archive?view=list&year=2026&month=3', '/archive?year=2026&month=3'])(
+      'lands an old month link (%s) on that month of the year',
+      async (path) => {
+        stubArchive()
+        // jsdom has no layout, hence no scrollIntoView to spy on.
+        const scrollIntoView = vi.fn()
+        Element.prototype.scrollIntoView = scrollIntoView
+        onTestFinished(() => {
+          delete (Element.prototype as Partial<Element>).scrollIntoView
+        })
 
-      renderArchivePage('/archive?year=2026&month=3')
+        renderArchivePage(path)
 
-      expect(await screen.findByText('Poème de mars')).toBeInTheDocument()
-    })
+        const march = await screen.findByRole('heading', { name: 'mars 2026' })
+        expect(screen.getByRole('link', { name: 'Fin septembre' })).toBeInTheDocument()
+        await vi.waitFor(() => expect(scrollIntoView).toHaveBeenCalled())
+        expect(scrollIntoView.mock.contexts[0]).toBe(march)
+      },
+    )
   })
 })
