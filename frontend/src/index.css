@@ -1,5 +1,6 @@
 /* Literata — self-hosted (OFL), see /fonts/OFL.txt. A variable font: one file covers weights
-   400-600, a second covers italic 400. No third-party CDN. */
+   400-600, a second covers italic 400. No third-party CDN. Used for poem text only (the poem's
+   title and body); everything else is Inter, bundled from @fontsource-variable/inter (main.tsx). */
 @font-face {
   font-family: 'Literata';
   font-style: normal;
@@ -20,7 +21,7 @@
   color-scheme: light dark;
 
   --font-serif: 'Literata', Georgia, 'Iowan Old Style', ui-serif, serif;
-  --font-sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'Inter Variable', system-ui, 'Segoe UI', Roboto, sans-serif;
 
   /* Type scale — a 1.25 (major third) ratio off a 1rem body. */
   --font-size-sm: 0.85rem;
@@ -82,7 +83,7 @@ body {
   margin: 0;
   background: var(--color-bg);
   color: var(--color-text);
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: var(--font-size-base);
   line-height: var(--line-height-body);
   -webkit-font-smoothing: antialiased;
@@ -91,7 +92,6 @@ body {
 h1,
 h2,
 h3 {
-  font-family: var(--font-serif);
   font-weight: 600;
   line-height: var(--line-height-heading);
   text-wrap: balance;
@@ -266,6 +266,12 @@ time {
 .poem {
   max-width: var(--measure);
   margin: 0 auto var(--space-5);
+}
+
+/* Verse readability is the point of the site: the poem's title and body keep the serif. */
+.poem > h2,
+.prose {
+  font-family: var(--font-serif);
 }
 
 .poem-meta {
