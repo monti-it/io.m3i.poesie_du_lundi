@@ -132,7 +132,7 @@ time {
 .site-header {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
   max-width: var(--measure-wide);
@@ -143,7 +143,20 @@ time {
 
 .site-header h1 {
   margin: 0;
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-xl);
+  line-height: 1.2;
+}
+
+.site-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+}
+
+.site-icon {
+  flex: none;
+  width: 1.2em;
+  height: 1.2em;
 }
 
 .site-header a {
