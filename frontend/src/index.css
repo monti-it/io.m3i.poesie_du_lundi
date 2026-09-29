@@ -147,6 +147,18 @@ time {
   line-height: 1.2;
 }
 
+.site-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+}
+
+.site-icon {
+  flex: none;
+  width: 1.2em;
+  height: 1.2em;
+}
+
 .site-header a {
   text-decoration: none;
 }

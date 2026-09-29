@@ -25,6 +25,15 @@ describe('App routing', () => {
     expect(screen.getByRole('heading', { name: 'La poésie du lundi' })).toBeInTheDocument()
   })
 
+  it('links the site icon and title to the home page under the site name', () => {
+    renderAt('/')
+
+    const home = screen.getByRole('link', { name: 'La poésie du lundi' })
+    expect(home).toHaveAttribute('href', '/')
+    expect(home.querySelector('img')).toHaveAttribute('src', '/favicon.svg')
+    expect(home.querySelector('img')).toHaveAttribute('alt', '')
+  })
+
   it('renders the reading layout for a poem, archive, and series route', () => {
     renderAt('/poems/au-pied-de-mon-arbre')
     expect(screen.getByRole('heading', { name: 'La poésie du lundi' })).toBeInTheDocument()
