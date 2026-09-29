@@ -38,13 +38,17 @@ export function SidePane() {
     retry: false,
   })
 
-  if (recentPoems.length === 0 && !random.data) {
-    return null
-  }
+  // Always rendered, so every public page links to the archive (issue #102) — at the foot of
+  // "Poèmes récents" when there is one, on its own otherwise.
+  const archiveLink = (
+    <p className="archive-link">
+      <Link to="/archive">Toute l'archive →</Link>
+    </p>
+  )
 
   return (
     <>
-      {recentPoems.length > 0 && (
+      {recentPoems.length > 0 ? (
         <section>
           <h2>Poèmes récents</h2>
           <ul className="poem-list">
@@ -55,15 +59,19 @@ export function SidePane() {
               </li>
             ))}
           </ul>
+          {archiveLink}
         </section>
+      ) : (
+        archiveLink
       )}
 
       {random.data && (
         <section>
           <h2>Au hasard</h2>
-          <p className="random-poem">
+          <div className="random-poem">
             <Link to={`/poems/${random.data.slug}`}>{random.data.title}</Link>
-          </p>
+            <time dateTime={random.data.publicationDate}>{formatDate(random.data.publicationDate)}</time>
+          </div>
           <button
             type="button"
             className="reroll"

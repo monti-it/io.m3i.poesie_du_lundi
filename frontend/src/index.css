@@ -150,12 +150,6 @@ time {
   text-decoration: none;
 }
 
-.site-nav {
-  display: flex;
-  gap: var(--space-2);
-  font-size: var(--font-size-sm);
-}
-
 .site-body {
   display: grid;
   gap: var(--space-4);
@@ -187,8 +181,21 @@ time {
   font-size: var(--font-size-md);
 }
 
+.archive-link {
+  margin: var(--space-1) 0 0;
+}
+
+.archive-link a {
+  text-decoration: none;
+}
+
 .random-poem {
+  display: flex;
+  flex-direction: column;
   margin: var(--space-1) 0;
+}
+
+.random-poem a {
   font-style: italic;
 }
 
@@ -462,6 +469,17 @@ time {
   margin: 0;
 }
 
+/* Archive list: one section per month of the selected year */
+
+.archive-list section + section {
+  margin-top: var(--space-3);
+}
+
+.archive-list h3 {
+  margin: 0;
+  scroll-margin-top: var(--space-2);
+}
+
 .skeleton-line {
   background: currentColor;
   opacity: 0.12;
@@ -501,7 +519,6 @@ time {
     color: #000;
   }
 
-  .site-nav,
   .poem-nav,
   .side-pane {
     display: none;

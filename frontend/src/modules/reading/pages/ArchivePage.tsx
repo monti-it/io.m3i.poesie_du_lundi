@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import { EmptyState } from '@shared/components/EmptyState'
 import { PageSkeleton } from '@shared/components/Skeleton'
 import { formatDate } from '@shared/lib/formatDate'
@@ -9,6 +9,8 @@ import { fetchArchive, type PoemSummary } from '../api/publicApi'
 
 const monthFormatter = new Intl.DateTimeFormat('fr-FR', { month: 'long' })
 const monthLabel = (month: number) => monthFormatter.format(new Date(2000, month - 1, 1))
+// The list view's month headings carry this id ("2026-09"), so a month can be linked to directly.
+const monthAnchor = (year: number, month: number) => `${year}-${String(month).padStart(2, '0')}`
 
 const WEEK_COLUMNS = 5
 
@@ -45,9 +47,26 @@ function buildYearGrid(year: number, entries: PoemSummary[]): MonthRow[] {
   })
 }
 
+interface MonthGroup {
+  month: number
+  poems: PoemSummary[]
+}
+
+// One group per month that has poems, newest month first and newest poem first within each.
+function groupByMonth(entries: PoemSummary[]): MonthGroup[] {
+  const sorted = [...entries].sort((a, b) => b.publicationDate.localeCompare(a.publicationDate))
+  const groups = new Map<number, PoemSummary[]>()
+  for (const poem of sorted) {
+    const month = Number(poem.publicationDate.slice(5, 7))
+    groups.set(month, [...(groups.get(month) ?? []), poem])
+  }
+  return [...groups].map(([month, poems]) => ({ month, poems }))
+}
+
 export function ArchivePage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [selected, setSelected] = useState<string | null>(null)
+  const { hash } = useLocation()
 
   const explicitView = searchParams.get('view')
   const monthParam = searchParams.get('month')
@@ -55,16 +74,24 @@ export function ArchivePage() {
   // an explicit "view=list".
   const view = explicitView === 'list' ? 'list' : explicitView === 'calendar' || !monthParam ? 'calendar' : 'list'
 
+  // Both views show one year at a time and share the selected year.
   const yearParam = searchParams.get('year')
   const currentYear = new Date().getFullYear()
-  const year =
-    view === 'calendar' ? (yearParam ? Number(yearParam) : currentYear) : yearParam ? Number(yearParam) : undefined
-  const month = view === 'list' && monthParam ? Number(monthParam) : undefined
+  const year = yearParam ? Number(yearParam) : currentYear
 
   const query = useQuery({
-    queryKey: ['archive', year, month],
-    queryFn: () => fetchArchive({ year, month }),
+    queryKey: ['archive', year],
+    queryFn: () => fetchArchive({ year }),
   })
+
+  // A "?month=" link (the list view used to drill down month by month) or a "#2026-09" anchor
+  // lands on that month's section once the year has loaded.
+  const anchor = view === 'list' ? (monthParam ? monthAnchor(year, Number(monthParam)) : hash.slice(1)) : ''
+  useEffect(() => {
+    if (anchor && query.data) {
+      document.getElementById(anchor)?.scrollIntoView()
+    }
+  }, [anchor, query.data])
 
   if (query.isPending) {
     return <PageSkeleton />
@@ -81,8 +108,8 @@ export function ArchivePage() {
   }
 
   const years = [...new Set([...archive.groups.map((group) => group.year), currentYear])].sort((a, b) => b - a)
-  const selectedYear = year ?? currentYear
-  const yearGrid = view === 'calendar' ? buildYearGrid(selectedYear, archive.entries) : []
+  const yearGrid = view === 'calendar' ? buildYearGrid(year, archive.entries) : []
+  const monthGroups = view === 'list' ? groupByMonth(archive.entries) : []
   const selectedWeek = yearGrid.flatMap((row) => row.weeks).find((week) => week.date === selected) ?? null
 
   const setView = (next: 'calendar' | 'list') => {
@@ -99,6 +126,7 @@ export function ArchivePage() {
   const setYear = (nextYear: number) => {
     const params = new URLSearchParams(searchParams)
     params.set('year', String(nextYear))
+    params.delete('month')
     setSearchParams(params)
     setSelected(null)
   }
@@ -108,15 +136,13 @@ export function ArchivePage() {
       <h2>Archive</h2>
 
       <div className="archive-toolbar">
-        {view === 'calendar' && (
-          <div className="segmented" role="tablist" aria-label="Année">
-            {years.map((y) => (
-              <button key={y} type="button" aria-current={y === selectedYear} onClick={() => setYear(y)}>
-                {y}
-              </button>
-            ))}
-          </div>
-        )}
+        <div className="segmented" role="tablist" aria-label="Année">
+          {years.map((y) => (
+            <button key={y} type="button" aria-current={y === year} onClick={() => setYear(y)}>
+              {y}
+            </button>
+          ))}
+        </div>
         <div className="segmented" role="tablist" aria-label="Vue">
           <button type="button" aria-pressed={view === 'calendar'} onClick={() => setView('calendar')}>
             Calendrier
@@ -175,35 +201,27 @@ export function ArchivePage() {
           )}
         </div>
       ) : (
-        <>
-          <ul className="poem-list">
-            {archive.groups.map((group) => (
-              <li key={`${group.year}-${group.month}`}>
-                <Link to={`/archive?view=list&year=${group.year}&month=${group.month}`}>
-                  {monthLabel(group.month)} {group.year} ({group.count})
-                </Link>
-              </li>
-            ))}
-          </ul>
-
-          {year && (
-            <section>
-              <h3>{month ? `${monthLabel(month)} ${year}` : year}</h3>
-              {archive.entries.length === 0 ? (
-                <EmptyState>Aucun poème pour cette période.</EmptyState>
-              ) : (
+        <div className="archive-list">
+          {monthGroups.length === 0 ? (
+            <EmptyState>Aucun poème publié en {year}.</EmptyState>
+          ) : (
+            monthGroups.map((group) => (
+              <section key={group.month} aria-labelledby={monthAnchor(year, group.month)}>
+                <h3 id={monthAnchor(year, group.month)}>
+                  {monthLabel(group.month)} {year}
+                </h3>
                 <ul className="poem-list">
-                  {archive.entries.map((poem) => (
+                  {group.poems.map((poem) => (
                     <li key={poem.id}>
                       <Link to={`/poems/${poem.slug}`}>{poem.title}</Link>
                       <time dateTime={poem.publicationDate}>{formatDate(poem.publicationDate)}</time>
                     </li>
                   ))}
                 </ul>
-              )}
-            </section>
+              </section>
+            ))
           )}
-        </>
+        </div>
       )}
     </section>
   )
