@@ -1,5 +1,6 @@
 /* Literata — self-hosted (OFL), see /fonts/OFL.txt. A variable font: one file covers weights
-   400-600, a second covers italic 400. No third-party CDN. */
+   400-600, a second covers italic 400. No third-party CDN. Used for poem text only (the poem's
+   title and body); everything else is Inter, bundled from @fontsource-variable/inter (main.tsx). */
 @font-face {
   font-family: 'Literata';
   font-style: normal;
@@ -17,10 +18,11 @@
 }
 
 :root {
-  color-scheme: light dark;
+  /* Dark-only on purpose, like the sibling sites (monti-it.io, Ledgy): one palette to keep honest. */
+  color-scheme: dark;
 
   --font-serif: 'Literata', Georgia, 'Iowan Old Style', ui-serif, serif;
-  --font-sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'Inter Variable', system-ui, 'Segoe UI', Roboto, sans-serif;
 
   /* Type scale — a 1.25 (major third) ratio off a 1rem body. */
   --font-size-sm: 0.85rem;
@@ -47,29 +49,45 @@
   --space-4: 3rem;
   --space-5: 4.5rem;
 
-  --color-bg: #fbf9f4;
-  --color-surface: #ffffff;
-  --color-text: #211d17;
-  --color-text-muted: #6b6458;
-  --color-border: #e6ddcd;
-  --color-accent: #7a3324;
-  --color-accent-hover: #591f14;
-  --color-link: var(--color-accent);
-  --color-link-hover: var(--color-accent-hover);
-}
+  /* Brand — the monti-it.io family (issue #106): deep navy + gold, shared with the favicon. */
+  --color-brand-navy: #1b244f;
+  --color-brand-gold: #fecb57;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-bg: #17140f;
-    --color-surface: #1d1911;
-    --color-text: #ece6d9;
-    --color-text-muted: #a89e8b;
-    --color-border: #3a3326;
-    --color-accent: #e0a184;
-    --color-accent-hover: #eeb99f;
-    --color-link: var(--color-accent);
-    --color-link-hover: var(--color-accent-hover);
-  }
+  --color-bg: #0f1829;
+  --color-surface: var(--color-brand-navy);
+  --color-surface-hover: #222c5c;
+  --color-border: #2a3563;
+  --color-border-strong: #34406e;
+  --gradient-page: linear-gradient(180deg, var(--color-brand-navy), var(--color-bg) 55%);
+
+  --color-heading: #f1f5f9;
+  --color-text: #cbd5e1;
+  /* Poem text sits a notch brighter than UI text: thin serif strokes on navy need the extra lift. */
+  --color-poem: #e2e8f0;
+  --color-text-muted: #94a3b8;
+
+  /* Gold is kept for primary emphasis (active selector, primary action, focus); links are the
+     secondary blue with a gold hover, as in Ledgy. */
+  --color-accent: var(--color-brand-gold);
+  --color-accent-hover: #fdb022;
+  --color-accent-contrast: var(--color-bg);
+  --color-accent-bg: rgba(254, 203, 87, 0.14);
+  --color-accent-border: rgba(254, 203, 87, 0.5);
+  --color-link: #60a5fa;
+  --color-link-hover: var(--color-accent);
+  --focus-ring: 2px solid var(--color-accent);
+
+  --r-sm: 8px;
+  --r-card: 18px;
+  --r-panel: 24px;
+  --r-pill: 999px;
+
+  /* Depth — two tiers: resting and raised (hover), plus a "lit from above" top edge. */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 12px 30px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.4);
+  --top-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --transition: 160ms ease;
 }
 
 *,
@@ -80,9 +98,11 @@
 
 body {
   margin: 0;
-  background: var(--color-bg);
+  background-color: var(--color-bg);
+  background-image: var(--gradient-page);
+  background-attachment: fixed;
   color: var(--color-text);
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: var(--font-size-base);
   line-height: var(--line-height-body);
   -webkit-font-smoothing: antialiased;
@@ -91,7 +111,7 @@ body {
 h1,
 h2,
 h3 {
-  font-family: var(--font-serif);
+  color: var(--color-heading);
   font-weight: 600;
   line-height: var(--line-height-heading);
   text-wrap: balance;
@@ -114,11 +134,83 @@ a {
   color: var(--color-link);
   text-decoration-thickness: 1px;
   text-underline-offset: 0.15em;
+  transition: color var(--transition);
 }
 
 a:hover,
 a:focus-visible {
   color: var(--color-link-hover);
+}
+
+/* One gold ring for every interactive element. */
+:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+/* Eyebrow — the portfolio's uppercase gold kicker, used for the side pane's section headings. */
+.eyebrow,
+.side-pane h2 {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--color-accent);
+}
+
+/* Controls — a zero-specificity base (mostly for the bare admin pages); component rules below
+   override it without a fight. */
+:where(button) {
+  font: inherit;
+  font-size: var(--font-size-sm);
+  padding: 0.4em 1em;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--r-pill);
+  background: var(--color-surface);
+  color: var(--color-heading);
+  cursor: pointer;
+  transition:
+    border-color var(--transition),
+    background-color var(--transition),
+    box-shadow var(--transition),
+    transform var(--transition);
+}
+
+:where(button):hover:not(:disabled) {
+  border-color: var(--color-accent-border);
+  background: var(--color-surface-hover);
+}
+
+:where(button[type='submit']) {
+  border-color: transparent;
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  font-weight: 600;
+}
+
+:where(button[type='submit']):hover:not(:disabled) {
+  border-color: transparent;
+  background: var(--color-accent-hover);
+}
+
+:where(button):disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+:where(input, textarea, select) {
+  font: inherit;
+  font-size: var(--font-size-sm);
+  padding: 0.4em 0.7em;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--r-sm);
+  background: var(--color-bg);
+  color: var(--color-heading);
+}
+
+:where(input, textarea, select):focus-visible {
+  border-color: var(--color-accent);
 }
 
 time {
@@ -141,9 +233,12 @@ time {
   border-bottom: 1px solid var(--color-border);
 }
 
+/* The portfolio header treatment: light, bold title; the gold-on-navy icon in a hairline tile. */
 .site-header h1 {
   margin: 0;
   font-size: var(--font-size-xl);
+  font-weight: 700;
+  letter-spacing: -0.02em;
   line-height: 1.2;
 }
 
@@ -157,10 +252,17 @@ time {
   flex: none;
   width: 1.2em;
   height: 1.2em;
+  border-radius: 0.25em;
+  box-shadow: 0 0 0 1px var(--color-border-strong);
 }
 
 .site-header a {
+  color: var(--color-heading);
   text-decoration: none;
+}
+
+.site-header a:hover {
+  color: var(--color-accent);
 }
 
 .site-body {
@@ -175,10 +277,13 @@ time {
   min-width: 0;
 }
 
-/* Narrow screens: the pane stacks below the page, set apart by a rule. */
+/* Narrow screens: the pane stacks below the page, as its own panel. */
 .side-pane {
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--color-border);
+  padding: var(--space-3) var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-panel);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm), var(--top-highlight);
   font-size: var(--font-size-sm);
 }
 
@@ -190,8 +295,9 @@ time {
   margin-top: var(--space-3);
 }
 
+/* .side-pane h2 is styled as an eyebrow (see "Eyebrow" above). */
 .side-pane h2 {
-  font-size: var(--font-size-md);
+  margin: 0 0 var(--space-1);
 }
 
 .archive-link {
@@ -208,30 +314,15 @@ time {
   margin: var(--space-1) 0;
 }
 
-.random-poem a {
-  font-style: italic;
-}
-
-.reroll {
-  font: inherit;
-  font-size: var(--font-size-sm);
-  padding: 0.2em 0.8em;
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  background: var(--color-surface);
-  color: var(--color-text-muted);
-  cursor: pointer;
-}
-
-.reroll:hover:not(:disabled),
-.reroll:focus-visible {
-  border-color: var(--color-accent);
+/* The reroll pill keeps the base button look and lifts on hover (portfolio pattern). */
+.reroll:hover:not(:disabled) {
   color: var(--color-accent);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
 }
 
 .reroll:disabled {
   cursor: progress;
-  opacity: 0.6;
 }
 
 @media (min-width: 64rem) {
@@ -248,10 +339,6 @@ time {
     position: sticky;
     top: var(--space-3);
     align-self: start;
-    padding-top: 0;
-    padding-left: var(--space-3);
-    border-top: none;
-    border-left: 1px solid var(--color-border);
   }
 
   /* A 15rem column is too tight for title and date side by side. */
@@ -266,6 +353,26 @@ time {
 .poem {
   max-width: var(--measure);
   margin: 0 auto var(--space-5);
+}
+
+/* Verse readability is the point of the site: the poem's title and body keep the serif. */
+.poem > h2,
+.prose {
+  font-family: var(--font-serif);
+}
+
+.prose {
+  color: var(--color-poem);
+}
+
+/* On the home page the title links to the poem: keep it a heading, not a blue link. */
+.poem > h2 a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.poem > h2 a:hover {
+  color: var(--color-accent);
 }
 
 .poem-meta {
@@ -323,7 +430,6 @@ time {
 
 .empty-state {
   color: var(--color-text-muted);
-  font-style: italic;
 }
 
 /* Archive calendar */
@@ -342,7 +448,7 @@ time {
   gap: 2px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   padding: 2px;
 }
 
@@ -357,25 +463,33 @@ time {
 
 .segmented button {
   flex: none;
-  font: inherit;
-  font-size: var(--font-size-sm);
   padding: 0.3em 0.9em;
-  border-radius: 999px;
   border: none;
   background: transparent;
   color: var(--color-text-muted);
-  cursor: pointer;
+}
+
+.segmented button:hover {
+  color: var(--color-heading);
+}
+
+.segmented button:focus-visible {
+  outline-offset: -2px;
+  border-radius: var(--r-pill);
 }
 
 .segmented button[aria-current='true'],
 .segmented button[aria-pressed='true'] {
   background: var(--color-accent);
-  color: var(--color-surface);
+  color: var(--color-accent-contrast);
+  font-weight: 600;
 }
 
 .calendar {
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: var(--r-panel);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm), var(--top-highlight);
   padding: var(--space-2);
 }
 
@@ -392,14 +506,13 @@ time {
 }
 
 .month-row-label {
-  font-style: italic;
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
 }
 
 .week-cell {
   aspect-ratio: 1;
-  border-radius: 6px;
+  border-radius: var(--r-sm);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -407,7 +520,6 @@ time {
   font-size: var(--font-size-sm);
   border: 1px solid transparent;
   background: none;
-  font-family: inherit;
   color: var(--color-text-muted);
   padding: 0;
 }
@@ -417,7 +529,8 @@ time {
 }
 
 .week-cell--published {
-  background: color-mix(in srgb, var(--color-accent) 16%, var(--color-surface));
+  background: var(--color-accent-bg);
+  border-color: var(--color-accent-border);
   color: var(--color-accent);
   cursor: pointer;
   font-weight: 600;
@@ -426,7 +539,11 @@ time {
 .week-cell--published:hover,
 .week-cell--published[aria-pressed='true'] {
   background: var(--color-accent);
-  color: var(--color-surface);
+  color: var(--color-accent-contrast);
+}
+
+.week-cell:disabled {
+  opacity: 1;
 }
 
 .week-cell--skipped {
@@ -435,8 +552,8 @@ time {
 }
 
 .week-cell--future {
-  border: 1px dotted var(--color-border);
-  color: var(--color-border);
+  border: 1px dotted var(--color-border-strong);
+  color: var(--color-border-strong);
   cursor: default;
 }
 
@@ -469,7 +586,7 @@ time {
 }
 
 .swatch--future {
-  border: 1px dotted var(--color-border);
+  border: 1px dotted var(--color-border-strong);
 }
 
 .calendar-detail {
@@ -484,13 +601,41 @@ time {
 
 /* Archive list: one section per month of the selected year */
 
+/* Each month is a card. */
+.archive-list section {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-card);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm), var(--top-highlight);
+  transition:
+    border-color var(--transition),
+    box-shadow var(--transition),
+    transform var(--transition);
+}
+
+.archive-list section:hover {
+  border-color: var(--color-border-strong);
+  box-shadow: var(--shadow-md), var(--top-highlight);
+  transform: translateY(-2px);
+}
+
 .archive-list section + section {
-  margin-top: var(--space-3);
+  margin-top: var(--space-2);
 }
 
 .archive-list h3 {
   margin: 0;
   scroll-margin-top: var(--space-2);
+}
+
+/* Inside a card the list's first rule would double the card's edge. */
+.archive-list .poem-list li:first-child {
+  border-top: none;
+}
+
+.archive-list .poem-list li:last-child {
+  border-bottom: none;
 }
 
 .skeleton-line {
@@ -529,6 +674,13 @@ time {
 @media print {
   body {
     background: #fff;
+    color: #000;
+  }
+
+  .prose,
+  h1,
+  h2,
+  h3 {
     color: #000;
   }
 
