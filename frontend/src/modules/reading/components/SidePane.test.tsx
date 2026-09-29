@@ -136,13 +136,19 @@ describe('SidePane', () => {
     expect(within(aside).queryByRole('heading', { name: 'Au hasard' })).not.toBeInTheDocument()
   })
 
-  it('links to the archive from the side pane, not the header', async () => {
+  it('links to the archive from the top of the side pane, not the header', async () => {
     stubApi()
 
     renderAt('/')
 
     const aside = await screen.findByRole('complementary')
-    expect(await within(aside).findByRole('link', { name: "Toute l'archive →" })).toHaveAttribute('href', '/archive')
+    await within(aside).findByRole('link', { name: 'Pris au hasard' })
+    expect(within(aside).getAllByRole('heading').map((heading) => heading.textContent)).toEqual([
+      'Archive',
+      'Poèmes récents',
+      'Au hasard',
+    ])
+    expect(within(aside).getByRole('link', { name: "Toute l'archive →" })).toHaveAttribute('href', '/archive')
     expect(within(screen.getByRole('banner')).queryByRole('link', { name: /archive/i })).not.toBeInTheDocument()
   })
 
@@ -154,6 +160,7 @@ describe('SidePane', () => {
     await vi.waitFor(() => expect(randomUrls).toHaveLength(1))
     const aside = screen.getByRole('complementary')
     expect(within(aside).queryByRole('heading', { name: 'Poèmes récents' })).not.toBeInTheDocument()
+    expect(within(aside).getByRole('heading', { name: 'Archive' })).toBeInTheDocument()
     expect(within(aside).getByRole('link', { name: "Toute l'archive →" })).toHaveAttribute('href', '/archive')
   })
 })

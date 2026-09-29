@@ -6,7 +6,7 @@ import { fetchPoems, fetchRandomPoem, fetchThisMondayPoem } from '../api/publicA
 
 const RECENT_POEMS_PAGE_SIZE = 6
 
-// The public site's secondary sections (issue #96) — "Poèmes récents" and "Au hasard" — shown
+// The public site's secondary sections (issue #96) — "Archive", "Poèmes récents" and "Au hasard" — shown
 // beside every public page by Layout. Shares the this-Monday query key with HomePage, so the home
 // page doesn't fetch it twice.
 export function SidePane() {
@@ -38,17 +38,17 @@ export function SidePane() {
     retry: false,
   })
 
-  // Always rendered, so every public page links to the archive (issue #102) — at the foot of
-  // "Poèmes récents" when there is one, on its own otherwise.
-  const archiveLink = (
-    <p className="archive-link">
-      <Link to="/archive">Toute l'archive →</Link>
-    </p>
-  )
-
   return (
     <>
-      {recentPoems.length > 0 ? (
+      {/* Always rendered, first, so every public page links to the archive (issues #102, #108). */}
+      <section>
+        <h2>Archive</h2>
+        <p className="archive-link">
+          <Link to="/archive">Toute l'archive →</Link>
+        </p>
+      </section>
+
+      {recentPoems.length > 0 && (
         <section>
           <h2>Poèmes récents</h2>
           <ul className="poem-list">
@@ -59,10 +59,7 @@ export function SidePane() {
               </li>
             ))}
           </ul>
-          {archiveLink}
         </section>
-      ) : (
-        archiveLink
       )}
 
       {random.data && (
