@@ -143,7 +143,20 @@ pattern"), tracked as the infra issues in the backlog:
      --from-literal=POSTGRES_PASSWORD="$PW"
    sudo kubectl create secret generic poesie-api-config -n poesie \
      --from-literal=ConnectionStrings__Default="Host=poesie-db;Database=poesie;Username=poesie;Password=$PW" \
-     --from-literal=ASPNETCORE_ENVIRONMENT=Production
+     --from-literal=ASPNETCORE_ENVIRONMENT=Production \
+     --from-literal=Preview__SigningKey="$(openssl rand -base64 48)"
+   ```
+
+   `Preview__SigningKey` signs draft preview links (docs/ARCHITECTURE.md). Without it the API —
+   and its `migrate` init container — exits at startup, so the rollout never completes. Keep it
+   stable: rotating it invalidates every preview link already sent. To add it to an existing
+   Secret without printing it:
+
+   ```bash
+   KEY=$(openssl rand -base64 48)
+   sudo kubectl -n poesie patch secret poesie-api-config --type merge \
+     -p "{\"stringData\":{\"Preview__SigningKey\":\"$KEY\"}}"
+   unset KEY
    ```
 
    `RunMigrationsOnStartup` is deliberately left unset on `poesie-api-config` — production
