@@ -59,6 +59,17 @@ public static class PublicPoemEndpoints
             .Produces<PublicPoemDto>()
             .Produces<ErrorDto>(StatusCodes.Status404NotFound);
 
+        // The side pane's "Au hasard" pick (issue #96) — also registered before "/{slug}". The
+        // client passes the slugs it's already showing as repeated `exclude` params.
+        poems.MapGet("/random", async (
+                string[]? exclude, GetRandomPoemQuery query, CancellationToken cancellationToken) =>
+            {
+                var poem = await query.HandleAsync(exclude ?? [], cancellationToken);
+                return poem is null ? Results.NotFound(new ErrorDto("No poem has been published yet.")) : Results.Ok(ToDto(poem));
+            })
+            .Produces<PublicPoemSummaryDto>()
+            .Produces<ErrorDto>(StatusCodes.Status404NotFound);
+
         poems.MapGet("/{slug}", async (
                 string slug, string? preview, GetPublishedPoemBySlugQuery query,
                 CancellationToken cancellationToken) =>
