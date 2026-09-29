@@ -51,7 +51,10 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
+          # Without set -e a rollout that times out (e.g. an old pod stuck terminating) still
+          # exits 0 and the job goes green while the previous API keeps serving (issue #96).
           script: |
+            set -e
             KUBECONFIG=/home/deploy/.kube/config
             CTX="--kubeconfig=$KUBECONFIG --context=poesie-ci"
             kubectl $CTX set image deployment/poesie-api migrate=ghcr.io/monti-it/io.m3i.poesie_du_lundi-api:${{ github.sha }} api=ghcr.io/monti-it/io.m3i.poesie_du_lundi-api:${{ github.sha }} -n poesie
