@@ -150,12 +150,6 @@ time {
   text-decoration: none;
 }
 
-.site-nav {
-  display: flex;
-  gap: var(--space-2);
-  font-size: var(--font-size-sm);
-}
-
 .site-body {
   display: grid;
   gap: var(--space-4);
@@ -185,6 +179,14 @@ time {
 
 .side-pane h2 {
   font-size: var(--font-size-md);
+}
+
+.archive-link {
+  margin: var(--space-1) 0 0;
+}
+
+.archive-link a {
+  text-decoration: none;
 }
 
 .random-poem {
@@ -501,7 +503,6 @@ time {
     color: #000;
   }
 
-  .site-nav,
   .poem-nav,
   .side-pane {
     display: none;

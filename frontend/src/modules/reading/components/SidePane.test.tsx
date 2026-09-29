@@ -39,14 +39,14 @@ const picks: PoemSummary[] = [
 ]
 
 // Stubs the three endpoints the pane reads; returns the /random URLs requested, in order.
-function stubApi({ random = 'picks' }: { random?: 'picks' | 'none' } = {}) {
+function stubApi({ random = 'picks', recentPoems = recent }: { random?: 'picks' | 'none'; recentPoems?: PagedPoems } = {}) {
   const randomUrls: string[] = []
   vi.stubGlobal(
     'fetch',
     vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input)
       if (url === '/api/poems/this-monday') return jsonResponse(200, thisMonday)
-      if (url.startsWith('/api/poems?')) return jsonResponse(200, recent)
+      if (url.startsWith('/api/poems?')) return jsonResponse(200, recentPoems)
       if (url.startsWith('/api/poems/random')) {
         randomUrls.push(url)
         return random === 'none'
@@ -132,5 +132,26 @@ describe('SidePane', () => {
     await within(aside).findByText('Un autre poème')
     await vi.waitFor(() => expect(randomUrls).toHaveLength(1))
     expect(within(aside).queryByRole('heading', { name: 'Au hasard' })).not.toBeInTheDocument()
+  })
+
+  it('links to the archive from the side pane, not the header', async () => {
+    stubApi()
+
+    renderAt('/')
+
+    const aside = await screen.findByRole('complementary')
+    expect(await within(aside).findByRole('link', { name: "Toute l'archive →" })).toHaveAttribute('href', '/archive')
+    expect(within(screen.getByRole('banner')).queryByRole('link', { name: /archive/i })).not.toBeInTheDocument()
+  })
+
+  it('keeps the archive link when there is no recent poem or random pick to show', async () => {
+    const randomUrls = stubApi({ random: 'none', recentPoems: { ...recent, items: [recent.items[0]], totalCount: 1 } })
+
+    renderAt('/')
+
+    await vi.waitFor(() => expect(randomUrls).toHaveLength(1))
+    const aside = screen.getByRole('complementary')
+    expect(within(aside).queryByRole('heading', { name: 'Poèmes récents' })).not.toBeInTheDocument()
+    expect(within(aside).getByRole('link', { name: "Toute l'archive →" })).toHaveAttribute('href', '/archive')
   })
 })
