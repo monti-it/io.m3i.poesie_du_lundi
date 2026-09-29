@@ -326,7 +326,17 @@ time {
   padding: 2px;
 }
 
+/* The year pill grows by one button a year and, as a flex item, would otherwise refuse to shrink
+   below its content — spilling out of the content column into the side pane. It scrolls instead. */
+.archive-toolbar .segmented {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
 .segmented button {
+  flex: none;
   font: inherit;
   font-size: var(--font-size-sm);
   padding: 0.3em 0.9em;
