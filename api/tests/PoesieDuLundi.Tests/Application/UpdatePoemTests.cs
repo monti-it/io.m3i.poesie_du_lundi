@@ -114,6 +114,31 @@ public class UpdatePoemTests
         await repository.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Keeps_the_publication_date_and_status_of_a_dated_poem(bool published)
+    {
+        var repository = Substitute.For<IPoemRepository>();
+        var poem = new Poem("Un titre", "Un corps.");
+        var publicationDate = new DateOnly(2026, 9, 21);
+        poem.Schedule(publicationDate);
+        if (published)
+        {
+            poem.Publish();
+        }
+        var status = poem.Status;
+        repository.GetAsync(poem.Id, Arg.Any<CancellationToken>()).Returns(poem);
+        var useCase = new UpdatePoem(repository);
+
+        var result = await useCase.HandleAsync(
+            poem.Id, "Nouveau titre", "Nouveau corps.", "nouveau-slug", Guid.NewGuid(), tags: ["hiver"]);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(publicationDate, poem.PublicationDate);
+        Assert.Equal(status, poem.Status);
+    }
+
     [Fact]
     public async Task Fails_when_the_poem_does_not_exist()
     {
