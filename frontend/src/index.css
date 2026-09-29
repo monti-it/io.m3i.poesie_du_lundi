@@ -36,6 +36,10 @@
   /* Measure — comfortable reading width for verse, in characters. */
   --measure: 34rem;
   --measure-wide: 42rem;
+  /* Page container once the side pane sits beside the content: the content column still gets
+     --measure-wide (62 - 2 gutters - 15 pane - 3 gap = 42rem). */
+  --side-pane-width: 15rem;
+  --page-wide: 62rem;
 
   --space-1: 0.5rem;
   --space-2: 1rem;
@@ -152,10 +156,89 @@ time {
   font-size: var(--font-size-sm);
 }
 
-.site-main {
+.site-body {
+  display: grid;
+  gap: var(--space-4);
   max-width: var(--measure-wide);
   margin: 0 auto;
   padding: var(--space-4) var(--space-2) var(--space-5);
+}
+
+.site-main {
+  min-width: 0;
+}
+
+/* Narrow screens: the pane stacks below the page, set apart by a rule. */
+.side-pane {
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--font-size-sm);
+}
+
+.side-pane:empty {
+  display: none;
+}
+
+.side-pane section + section {
+  margin-top: var(--space-3);
+}
+
+.side-pane h2 {
+  font-size: var(--font-size-md);
+}
+
+.random-poem {
+  margin: var(--space-1) 0;
+  font-style: italic;
+}
+
+.reroll {
+  font: inherit;
+  font-size: var(--font-size-sm);
+  padding: 0.2em 0.8em;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.reroll:hover:not(:disabled),
+.reroll:focus-visible {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.reroll:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+@media (min-width: 64rem) {
+  .site-header,
+  .site-body {
+    max-width: var(--page-wide);
+  }
+
+  .site-body {
+    grid-template-columns: minmax(0, 1fr) var(--side-pane-width);
+  }
+
+  .side-pane {
+    position: sticky;
+    top: var(--space-3);
+    align-self: start;
+    padding-top: 0;
+    padding-left: var(--space-3);
+    border-top: none;
+    border-left: 1px solid var(--color-border);
+  }
+
+  /* A 15rem column is too tight for title and date side by side. */
+  .side-pane .poem-list li {
+    flex-direction: column;
+    gap: 0;
+  }
 }
 
 /* Poems */
@@ -389,7 +472,7 @@ time {
   }
 
   .site-header,
-  .site-main {
+  .site-body {
     padding-left: var(--space-2);
     padding-right: var(--space-2);
   }
@@ -409,7 +492,8 @@ time {
   }
 
   .site-nav,
-  .poem-nav {
+  .poem-nav,
+  .side-pane {
     display: none;
   }
 

@@ -47,6 +47,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddSingleton(previewLink);
         services.AddSingleton<IPreviewTokenService, PreviewTokenService>();
         services.AddScoped<GetThisMondayPoemQuery>();
+        services.AddScoped<GetRandomPoemQuery>();
         services.AddScoped<GetArchiveQuery>();
         services.AddScoped<GetSeriesBySlugQuery>();
         services.AddScoped<ListTagsQuery>();
