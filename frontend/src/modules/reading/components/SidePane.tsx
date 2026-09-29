@@ -68,9 +68,10 @@ export function SidePane() {
       {random.data && (
         <section>
           <h2>Au hasard</h2>
-          <p className="random-poem">
+          <div className="random-poem">
             <Link to={`/poems/${random.data.slug}`}>{random.data.title}</Link>
-          </p>
+            <time dateTime={random.data.publicationDate}>{formatDate(random.data.publicationDate)}</time>
+          </div>
           <button
             type="button"
             className="reroll"

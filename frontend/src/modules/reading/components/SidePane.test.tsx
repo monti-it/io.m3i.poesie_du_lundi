@@ -93,6 +93,7 @@ describe('SidePane', () => {
       'href',
       '/poems/pris-au-hasard',
     )
+    expect(within(aside).getByText('1 janvier 2024')).toHaveAttribute('datetime', '2024-01-01')
     expect(within(aside).getByRole('heading', { name: 'Poèmes récents' })).toBeInTheDocument()
     expect(within(aside).getByText('Un autre poème')).toBeInTheDocument()
     expect(within(aside).queryByText('Poème de cette semaine')).not.toBeInTheDocument()
@@ -120,6 +121,7 @@ describe('SidePane', () => {
     await userEvent.click(within(aside).getByRole('button', { name: 'Un autre' }))
 
     expect(await within(aside).findByRole('link', { name: 'Encore un' })).toBeInTheDocument()
+    expect(within(aside).getByText('2 janvier 2023')).toHaveAttribute('datetime', '2023-01-02')
     expect(excludedSlugs(randomUrls[1])).toContain('pris-au-hasard')
   })
 

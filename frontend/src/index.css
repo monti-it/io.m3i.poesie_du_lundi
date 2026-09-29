@@ -190,7 +190,12 @@ time {
 }
 
 .random-poem {
+  display: flex;
+  flex-direction: column;
   margin: var(--space-1) 0;
+}
+
+.random-poem a {
   font-style: italic;
 }
 
