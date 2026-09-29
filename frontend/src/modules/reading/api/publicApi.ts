@@ -59,6 +59,12 @@ export interface Series {
 
 export const fetchThisMondayPoem = () => publicFetch<Poem>('/api/poems/this-monday')
 
+// `exclude` lists slugs already on screen; the server ignores it when it would leave nothing.
+export const fetchRandomPoem = (exclude: readonly string[] = []) => {
+  const query = new URLSearchParams(exclude.map((slug) => ['exclude', slug])).toString()
+  return publicFetch<PoemSummary>(`/api/poems/random${query ? `?${query}` : ''}`)
+}
+
 export const fetchPoemBySlug = (slug: string, previewToken?: string | null) => {
   const query = previewToken ? `?preview=${encodeURIComponent(previewToken)}` : ''
   return publicFetch<Poem>(`/api/poems/${encodeURIComponent(slug)}${query}`)

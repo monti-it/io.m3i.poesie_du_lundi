@@ -5,18 +5,12 @@ import { EmptyState } from '@shared/components/EmptyState'
 import { PageSkeleton } from '@shared/components/Skeleton'
 import { Prose } from '@shared/components/Prose'
 import { formatDate } from '@shared/lib/formatDate'
-import { fetchPoems, fetchThisMondayPoem } from '../api/publicApi'
-
-const RECENT_POEMS_PAGE_SIZE = 6
+import { fetchThisMondayPoem } from '../api/publicApi'
 
 export function HomePage() {
   const thisMonday = useQuery({ queryKey: ['poems', 'this-monday'], queryFn: fetchThisMondayPoem })
-  const recent = useQuery({
-    queryKey: ['poems', 'recent'],
-    queryFn: () => fetchPoems({ page: 1, pageSize: RECENT_POEMS_PAGE_SIZE }),
-  })
 
-  if (thisMonday.isPending || recent.isPending) {
+  if (thisMonday.isPending) {
     return <PageSkeleton />
   }
 
@@ -24,44 +18,26 @@ export function HomePage() {
     return <EmptyState>Impossible de charger le poème du moment pour l'instant.</EmptyState>
   }
 
-  const recentPoems = (recent.data?.items ?? []).filter((poem) => poem.slug !== thisMonday.data?.slug)
-
   return (
-    <>
-      <section>
-        {thisMonday.data ? (
-          <article className="poem">
-            <h2>
-              <Link to={`/poems/${thisMonday.data.slug}`}>{thisMonday.data.title}</Link>
-            </h2>
-            <p className="poem-meta">
-              <time dateTime={thisMonday.data.publicationDate}>{formatDate(thisMonday.data.publicationDate)}</time>
-              {thisMonday.data.series && (
-                <span>
-                  Série : <Link to={`/series/${thisMonday.data.series.slug}`}>{thisMonday.data.series.title}</Link>
-                </span>
-              )}
-            </p>
-            <Prose>{thisMonday.data.body}</Prose>
-          </article>
-        ) : (
-          <EmptyState>Aucun poème n'a encore été publié.</EmptyState>
-        )}
-      </section>
-
-      {recentPoems.length > 0 && (
-        <section>
-          <h2>Poèmes récents</h2>
-          <ul className="poem-list">
-            {recentPoems.map((poem) => (
-              <li key={poem.id}>
-                <Link to={`/poems/${poem.slug}`}>{poem.title}</Link>
-                <time dateTime={poem.publicationDate}>{formatDate(poem.publicationDate)}</time>
-              </li>
-            ))}
-          </ul>
-        </section>
+    <section>
+      {thisMonday.data ? (
+        <article className="poem">
+          <h2>
+            <Link to={`/poems/${thisMonday.data.slug}`}>{thisMonday.data.title}</Link>
+          </h2>
+          <p className="poem-meta">
+            <time dateTime={thisMonday.data.publicationDate}>{formatDate(thisMonday.data.publicationDate)}</time>
+            {thisMonday.data.series && (
+              <span>
+                Série : <Link to={`/series/${thisMonday.data.series.slug}`}>{thisMonday.data.series.title}</Link>
+              </span>
+            )}
+          </p>
+          <Prose>{thisMonday.data.body}</Prose>
+        </article>
+      ) : (
+        <EmptyState>Aucun poème n'a encore été publié.</EmptyState>
       )}
-    </>
+    </section>
   )
 }

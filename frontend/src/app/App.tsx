@@ -2,6 +2,7 @@ import { Route, Routes } from 'react-router-dom'
 import { PoemEditorPage } from '@modules/authoring/pages/PoemEditorPage'
 import { PoemListPage } from '@modules/authoring/pages/PoemListPage'
 import { ArchivePage } from '@modules/reading/pages/ArchivePage'
+import { SidePane } from '@modules/reading/components/SidePane'
 import { HomePage } from '@modules/reading/pages/HomePage'
 import { PoemPage } from '@modules/reading/pages/PoemPage'
 import { SeriesPage } from '@modules/reading/pages/SeriesPage'
@@ -11,7 +12,7 @@ import { NotFoundPage } from './NotFoundPage'
 function App() {
   return (
     <Routes>
-      <Route element={<Layout />}>
+      <Route element={<Layout aside={<SidePane />} />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/poems/:slug" element={<PoemPage />} />
         <Route path="/archive" element={<ArchivePage />} />
