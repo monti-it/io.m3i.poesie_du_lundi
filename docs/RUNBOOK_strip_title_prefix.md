@@ -3,7 +3,8 @@
 Removes the redundant "La poésie du lundi :" site-name prefix from existing poem titles via
 `dotnet PoesieDuLundi.dll strip-title-prefix [--dry-run]` — see
 `StripTitlePrefixCommandLine`/`StripTitlePrefix`/`PoemTitlePrefixCleanup` for what counts as a
-match (tolerant of casing, spacing, straight vs full-width colon, and missing accents) and what's
+match (tolerant of casing, spacing, `La`/`Ma`/`l a`/leading-number variants, a `:`/`：`/`/`
+separator, and missing accents — the same variants the email importer recognises) and what's
 left alone (titles with no subtitle after the prefix, and anything that doesn't start with the
 prefix, e.g. a `Fwd:`-prefixed subject line).
 
