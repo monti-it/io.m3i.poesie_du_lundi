@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
 
 function renderAt(path: string) {
@@ -17,6 +17,7 @@ function renderAt(path: string) {
 describe('App routing', () => {
   afterEach(() => {
     cleanup()
+    vi.useRealTimers()
   })
 
   it('renders the reading layout at the root', () => {
@@ -45,6 +46,47 @@ describe('App routing', () => {
 
     renderAt('/series/une-saison')
     expect(screen.getByRole('heading', { name: 'La poésie du lundi' })).toBeInTheDocument()
+  })
+
+  it('signs every public page with a footer carrying the current year', () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2027-03-01T12:00:00'))
+
+    for (const path of ['/', '/poems/au-pied-de-mon-arbre', '/archive', '/series/une-saison']) {
+      renderAt(path)
+      expect(screen.getByRole('contentinfo')).toHaveTextContent(
+        '© 2027 La poésie du lundi · Fait avec ♥ par monti-it.io',
+      )
+      cleanup()
+    }
+  })
+
+  it('links monti-it.io in the footer to the portfolio', () => {
+    renderAt('/')
+
+    expect(screen.getByRole('link', { name: 'monti-it.io' })).toHaveAttribute(
+      'href',
+      'https://monti-it.io',
+    )
+  })
+
+  it('puts the footer after the page and the side pane', () => {
+    const { container } = renderAt('/')
+
+    const footer = screen.getByRole('contentinfo')
+    for (const selector of ['.site-main', '.side-pane']) {
+      const region = container.querySelector(selector)
+      expect(region).not.toBeNull()
+      expect(region!.compareDocumentPosition(footer) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    }
+  })
+
+  it('renders no footer on the admin and not-found pages', () => {
+    for (const path of ['/admin', '/admin/poems/new', '/nonsense']) {
+      renderAt(path)
+      expect(screen.queryByRole('contentinfo')).not.toBeInTheDocument()
+      cleanup()
+    }
   })
 
   it('renders the authoring route tree at /admin', () => {
