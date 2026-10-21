@@ -14,7 +14,7 @@
     <PackageReference Include="MimeKit" Version="4.18.1" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.3.0" />
-    <PackageReference Include="System.ServiceModel.Syndication" Version="10.0.12" />
+    <PackageReference Include="System.ServiceModel.Syndication" Version="10.0.13" />
   </ItemGroup>
 
 </Project>
